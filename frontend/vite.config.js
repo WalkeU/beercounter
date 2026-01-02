@@ -13,7 +13,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://backend:3001", // Docker: használj service nevet
+        target: "http://backend:3001",
         changeOrigin: true,
       },
     },
