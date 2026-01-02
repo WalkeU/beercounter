@@ -1,0 +1,16 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Package files másolása
+COPY package*.json ./
+
+# Függőségek telepítése
+RUN npm install
+
+# Forráskód másolása
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev"]
