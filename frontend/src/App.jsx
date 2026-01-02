@@ -1,7 +1,4 @@
 import { useState, useEffect } from "react"
-import "./App.css"
-
-const API_URL = ""
 
 function App() {
   const [todos, setTodos] = useState([])
@@ -18,7 +15,7 @@ function App() {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`${API_URL}/api/todos`)
+      const response = await fetch("/api/todos")
       if (!response.ok) throw new Error("Failed to fetch todos")
       const data = await response.json()
       setTodos(data)
@@ -37,7 +34,7 @@ function App() {
 
     try {
       setError(null)
-      const response = await fetch(`${API_URL}/api/todos`, {
+      const response = await fetch("/api/todos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: newTodo }),
@@ -58,7 +55,7 @@ function App() {
   const toggleTodo = async (id, completed) => {
     try {
       setError(null)
-      const response = await fetch(`${API_URL}/api/todos/${id}`, {
+      const response = await fetch(`/api/todos/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed: !completed }),
@@ -78,7 +75,7 @@ function App() {
   const deleteTodo = async (id) => {
     try {
       setError(null)
-      const response = await fetch(`${API_URL}/api/todos/${id}`, {
+      const response = await fetch(`/api/todos/${id}`, {
         method: "DELETE",
       })
 

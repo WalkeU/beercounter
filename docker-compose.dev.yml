@@ -1,7 +1,7 @@
 services:
   mariadb:
     image: mariadb:11.8
-    container_name: todo-mariadb-dev
+    container_name: beercounter-mariadb-dev
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: todo_db
@@ -10,7 +10,7 @@ services:
     volumes:
       - mariadb_data_dev:/var/lib/mysql
     networks:
-      - todo-network
+      - beercounter-network
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -21,7 +21,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: todo-backend-dev
+    container_name: beercounter-backend-dev
     environment:
       DB_HOST: mariadb
       DB_USER: root
@@ -38,14 +38,14 @@ services:
       mariadb:
         condition: service_healthy
     networks:
-      - todo-network
+      - beercounter-network
     command: npm run dev
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: todo-frontend-dev
+    container_name: beercounter-frontend-dev
     ports:
       - "5173:5173"
     volumes:
@@ -54,12 +54,12 @@ services:
     depends_on:
       - backend
     networks:
-      - todo-network
+      - beercounter-network
     environment:
       - VITE_API_URL=http://localhost:3001
 
 networks:
-  todo-network:
+  beercounter-network:
     driver: bridge
 
 volumes:
