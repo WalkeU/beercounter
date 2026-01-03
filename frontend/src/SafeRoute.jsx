@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { Navigate } from "react-router-dom"
 import { checkAuth } from "./api/user"
+import Navbar from "./components/Navbar"
 
 const SafeRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null)

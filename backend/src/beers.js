@@ -46,9 +46,18 @@ router.post("/entry", verifyToken, async (req, res) => {
 })
 
 // Delete entry
-router.delete("/entry/:entryId", verifyToken, async (req, res) => {
+router.delete("/deleteentry/:entryId", verifyToken, async (req, res) => {
   const { entryId } = req.params
+  const userId = req.user?.id
   try {
+    // Check if entry exists and belongs to user
+    const [entries] = await pool.query("SELECT user_id FROM entries WHERE id = ?", [entryId])
+    if (entries.length === 0) {
+      return res.status(404).json({ error: "Bejegyzés nem található!" })
+    }
+    if (entries[0].user_id !== userId) {
+      return res.status(403).json({ error: "Csak a saját bejegyzésedet törölheted!" })
+    }
     await pool.query("DELETE FROM entries WHERE id = ?", [entryId])
     res.json({ status: "deleted" })
   } catch (err) {

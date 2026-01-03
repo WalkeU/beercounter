@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { getCurrentUser } from "../api/user"
-import { getRecentEntries, getUserEntries, getGlobalStats, getUserStats } from "../api/beer"
+import { getRecentEntries, getUserEntries, getGlobalStats, getUserStats, getTopUsers } from "../api/beer"
 import Navbar from "../components/Navbar"
 import CreateEntry from "../components/CreateEntry"
 
@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [formOpen, setFormOpen] = useState(false)
   const [stats, setStats] = useState(null)
   const [userStats, setUserStats] = useState(null)
+  const [topUsers, setTopUsers] = useState([])
 
   // Fetch entries for the current page and view
   useEffect(() => {
@@ -44,8 +45,12 @@ const Dashboard = () => {
         setMyEntries(myData?.entries || [])
         setUserStats(userStatsData)
         setTotal(view === "global" ? globalData?.total || 0 : myData?.total || 0)
-        const s = await getGlobalStats().catch(() => null)
+        const [s, topUsersData] = await Promise.all([
+          getGlobalStats().catch(() => null),
+          getTopUsers().catch(() => []),
+        ])
         setStats(s)
+        setTopUsers(topUsersData)
       } catch (error) {
         console.error("Hiba a betöltés során:", error)
       } finally {
@@ -56,14 +61,8 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, page])
 
-  const refreshLists = async () => {
-    try {
-      setLoading(true)
-      setPage(1)
-      // Triggers useEffect
-    } catch (error) {
-      console.error(error)
-    }
+  const refreshLists = () => {
+    window.location.reload()
   }
 
   const sumEntries = (arr) => arr.reduce((s, it) => s + (it.count || 0) * (it.quantity || 0.5), 0)
@@ -95,7 +94,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="app">
+      <div className="app min-h-screen">
         <div className="container p-6">
           <p>Betöltés...</p>
         </div>
@@ -171,7 +170,7 @@ const Dashboard = () => {
           <div className="col-span-full lg:col-span-1 p-4 rounded border border-border bg-surface h-full">
             <div>
               <h2>
-                Sörmegoszlás <span className="text-text-secondary">Top {beerDist.length}</span>
+                Sörmegoszlás <span className="text-text-secondary">Top {beerDist.length - 1}</span>
               </h2>
               <div className="space-y-2">
                 {beerDist.slice(0, 5).map((b, i) => (
@@ -194,7 +193,21 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          <div className="col-span-full lg:col-span-1 p-4 rounded border border-border bg-surface h-full"></div>
+          <div className="col-span-full lg:col-span-1 p-4 rounded border border-border bg-surface h-full">
+            <h2 className="mb-2">Toplista</h2>
+            <div className="space-y-2">
+              {topUsers.map((u, i) => (
+                <div key={u.username} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-text-secondary">#{i + 1}</span>
+                    <span>{u.username}</span>
+                  </div>
+                  <span className="text-sm text-text-secondary">{u.count?.toFixed(1) || 0} L</span>
+                </div>
+              ))}
+              {topUsers.length === 0 && <div className="text-sm text-text-secondary">Nincs még adat.</div>}
+            </div>
+          </div>
           <div className="col-span-full lg:col-span-3 h-full">
             <div className="mb-4 p-4 rounded border border-border bg-surface h-full flex flex-col relative pb-10 lg:pb-10">
               <h2 className="mb-2">Legutóbbi bejegyzések ({view === "global" ? "Globális" : "Saját"})</h2>
