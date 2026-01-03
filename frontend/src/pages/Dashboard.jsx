@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null)
   const [userStats, setUserStats] = useState(null)
   const [topUsers, setTopUsers] = useState([])
+  const [openMenuId, setOpenMenuId] = useState(null)
 
   // Fetch entries for the current page and view
   useEffect(() => {
@@ -211,36 +212,60 @@ const Dashboard = () => {
           <div className="col-span-full lg:col-span-3 h-full">
             <div className="mb-4 p-4 rounded border border-border bg-surface h-full flex flex-col relative pb-10 lg:pb-10">
               <h2 className="mb-2">Legutóbbi bejegyzések ({view === "global" ? "Globális" : "Saját"})</h2>
-              <ul className="flex-1">
-                {(view === "global" ? globalEntries : myEntries).map((it) => (
-                  <li key={it.id} className="py-2 border-b border-bg-secondary last:border-b-0">
-                    <div className="flex justify-between">
-                      <div>
+              <table className="w-full">
+                <tbody>
+                  {(view === "global" ? globalEntries : myEntries).map((it) => (
+                    <tr key={it.id} className="border-b border-bg-secondary last:border-b-0 relative group">
+                      <td className="py-2 pr-4 align-center">
                         <div className="font-semibold">{it.beer_name || it.beer || "Ismeretlen"}</div>
-                      </div>
-                      <div className="text-sm text-text-secondary">
-                        {it.count} × {it.quantity || 0.5}L • {it.user?.username || it.username}
-                      </div>
-                    </div>
-                    <div className="flex flex-row items-center gap-2 text-xs mt-1">
-                      <span className="text-text-secondary" suppressHydrationWarning>
-                        {new Date(it.created_at).toLocaleString("hu-HU", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                      {it.comment && (
-                        <span className=" text-text-secondary" title={it.comment}>
-                          – {it.comment}
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                        <div className="flex items-center gap-2 text-xs text-text-secondary mt-1">
+                          <span suppressHydrationWarning>
+                            {new Date(it.created_at).toLocaleString("hu-HU", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          {it.comment && <span title={it.comment}>– {it.comment}</span>}
+                        </div>
+                      </td>
+                      <td className="py-2 text-right align-center">
+                        <div className="flex items-center justify-end gap-4">
+                          <div className="text-m text-text-secondary">
+                            {it.count} × {it.quantity || 0.5}L • {it.user?.username || it.username}
+                          </div>
+                          <div className="relative">
+                            <button
+                              onClick={() => setOpenMenuId(openMenuId === it.id ? null : it.id)}
+                              className="opacity-0 text-lg group-hover:opacity-100 px-0 py-1 text-text-secondary hover:text-text-primary transition-opacity"
+                            >
+                              ⋮
+                            </button>
+                            {openMenuId === it.id && (
+                              <>
+                                <div className="fixed inset-0 z-20" onClick={() => setOpenMenuId(null)} />
+                                <div className="absolute right-0 mt-1 bg-surface border border-border rounded shadow-lg z-30 min-w-[200px]">
+                                  <button
+                                    onClick={() => {
+                                      // Felhasználó megtekintése - egyelőre nem csinál semmit
+                                      setOpenMenuId(null)
+                                    }}
+                                    className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary"
+                                  >
+                                    Felhasználó megtekintése
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               {/* Pager */}
               {pageCount > 1 && (
                 <div
