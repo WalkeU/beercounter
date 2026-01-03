@@ -9,3 +9,5 @@ build
 .env.prod
 scripts
 TEMPLATES
+.vscode
+.github

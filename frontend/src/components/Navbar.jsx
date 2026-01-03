@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { checkAuth, logout } from "../api/user"
+import { checkAuth, logout, getCurrentUser } from "../api/user"
 import Logo from "./Logo"
 
 const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [username, setUsername] = useState("")
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
@@ -13,6 +14,10 @@ const Navbar = () => {
       try {
         const authenticated = await checkAuth()
         setIsAuthenticated(!!authenticated)
+        if (authenticated) {
+          const user = await getCurrentUser()
+          setUsername(user?.username || "")
+        }
       } catch (err) {
         setIsAuthenticated(false)
         console.error("Auth check error:", err)
@@ -36,15 +41,18 @@ const Navbar = () => {
   if (loading) return null
 
   return (
-    <nav className="w-full bg-bg text-white px-3 py-4 shadow-md">
+    <nav className="w-full bg-bg text-white px-3 py-4 shadow-md border-b border-accent">
       <div className="px-10 mx-auto flex items-center justify-between">
         <Logo size={20} />
 
-        <div>
+        <div className="flex items-center gap-4">
           {isAuthenticated ? (
-            <button onClick={handleLogout} className="bg-accent text-bg font-bold px-4 py-2 rounded-md">
-              Kilépés
-            </button>
+            <>
+              <span className="text-text-primary font-bold">{username}</span>
+              <button onClick={handleLogout} className="bg-accent text-bg font-bold px-4 py-2 rounded-md">
+                Kilépés
+              </button>
+            </>
           ) : (
             <button
               onClick={() => navigate("/login")}

@@ -2,7 +2,7 @@
 
 @theme base {
   --color-bg: #1b1b1b;
-  --color-bg-secondary: #3e3e3e;
+  --color-bg-secondary: #2c2c2c;
 
   --color-primary: #808080;
   --color-accent: #ff9900;
@@ -17,6 +17,12 @@
 
   --text-2xl: 2rem;
   --text-xl: 1.5rem;
+
+  --color-rank-1: #f5c542;
+  --color-rank-2: #cfd8dc;
+  --color-rank-3: #cd7f32;
+  --color-rank-4: #5edfd6;
+  --color-rank-5: #28c434;
 }
 
 @layer base {

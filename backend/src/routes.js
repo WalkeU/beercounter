@@ -5,4 +5,8 @@ const router = express.Router()
 const userRoutes = require("./users")
 router.use("/user", userRoutes)
 
+// Beer routes
+const beerRoutes = require("./beers")
+router.use("/beer", beerRoutes)
+
 module.exports = router
