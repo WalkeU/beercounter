@@ -1,24 +1,9 @@
-// Get all entries (for stats, not paginated)
-router.get("/allentries", async (req, res) => {
-  try {
-    const [entries] = await pool.query(
-      `SELECT e.*, b.name AS beer_name, u.username 
-       FROM entries e 
-       JOIN beers b ON e.beer_id = b.id 
-       JOIN users u ON e.user_id = u.id 
-       ORDER BY e.created_at DESC`
-    )
-    res.json({ entries })
-  } catch (err) {
-    res.status(500).json({ error: "Szerver hiba!", details: err.message, stack: err.stack, full: err })
-  }
-})
 const express = require("express")
 const router = express.Router()
 const pool = require("./pool")
 const { verifyToken } = require("./users")
 
-// Helper function to capitalize brand names
+// Helper function to capitalize beer names
 const capitalizeBeer = (str) => {
   return str
     .toLowerCase()
@@ -146,14 +131,14 @@ router.get("/recent", async (req, res) => {
 router.get("/globalstats", async (req, res) => {
   try {
     const [[{ totalCount, totalMoney }]] = await pool.query(
-      "SELECT SUM(count * quantity) AS totalCount, SUM(count * quantity * b.price) AS totalMoney FROM entries e JOIN brands b ON e.brand_id = b.id"
+      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * e.quantity * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id"
     )
-    const [brandStats] = await pool.query(
-      "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN brands b ON e.brand_id = b.id GROUP BY b.id"
+    const [beerStats] = await pool.query(
+      "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN beers b ON e.beer_id = b.id GROUP BY b.id"
     )
-    res.json({ totalCount, totalMoney, brandStats })
+    res.json({ totalCount, totalMoney, beerStats })
   } catch (err) {
-    res.status(500).json({ error: "Szerver hiba!" })
+    res.status(500).json({ error: "Szerver hiba!", details: err.message, stack: err.stack, full: err })
   }
 })
 
@@ -165,16 +150,16 @@ router.get("/userstats", async (req, res) => {
     if (userRows.length === 0) return res.json({})
     const userId = userRows[0].id
     const [[{ totalCount, totalMoney }]] = await pool.query(
-      "SELECT SUM(count * quantity) AS totalCount, SUM(count * quantity * b.price) AS totalMoney FROM entries e JOIN brands b ON e.brand_id = b.id WHERE e.user_id = ?",
+      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * e.quantity * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id WHERE e.user_id = ?",
       [userId]
     )
-    const [brandStats] = await pool.query(
-      "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN brands b ON e.brand_id = b.id WHERE e.user_id = ? GROUP BY b.id",
+    const [beerStats] = await pool.query(
+      "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN beers b ON e.beer_id = b.id WHERE e.user_id = ? GROUP BY b.id",
       [userId]
     )
-    res.json({ totalCount, totalMoney, brandStats })
+    res.json({ totalCount, totalMoney, beerStats })
   } catch (err) {
-    res.status(500).json({ error: "Szerver hiba!" })
+    res.status(500).json({ error: "Szerver hiba!", details: err.message, stack: err.stack, full: err })
   }
 })
 

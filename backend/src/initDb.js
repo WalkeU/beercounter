@@ -4,6 +4,14 @@ async function initDatabase() {
   try {
     const connection = await pool.getConnection()
 
+    // Add indexes for faster queries (after connection)
+    await connection.query(`
+      ALTER TABLE entries
+        ADD INDEX IF NOT EXISTS idx_user_id (user_id),
+        ADD INDEX IF NOT EXISTS idx_beer_id (beer_id),
+        ADD INDEX IF NOT EXISTS idx_created_at (created_at)
+    `)
+
     // Create users table if not exists
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (

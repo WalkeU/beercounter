@@ -41,7 +41,7 @@ const Navbar = () => {
   if (loading) return null
 
   return (
-    <nav className="w-full bg-bg text-white px-3 py-4 shadow-md border-b border-accent">
+    <nav className="w-full bg-bg text-white px-0 py-3 shadow-md border-b border-accent">
       <div className="px-10 mx-auto flex items-center justify-between">
         <Logo size={20} />
 
@@ -49,7 +49,10 @@ const Navbar = () => {
           {isAuthenticated ? (
             <>
               <span className="text-text-primary font-bold">{username}</span>
-              <button onClick={handleLogout} className="bg-accent text-bg font-bold px-4 py-2 rounded-md">
+              <button
+                onClick={handleLogout}
+                className="bg-bg text-accent border border-accent font-bold px-4 py-2 rounded-md"
+              >
                 Kilépés
               </button>
             </>
