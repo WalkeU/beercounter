@@ -59,7 +59,7 @@ const AuthPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <input
-              // type="email"
+              type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

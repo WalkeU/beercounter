@@ -1,12 +1,12 @@
-import React, { useState } from "react"
-import { createEntry, getBeers, getTopBeers } from "../api/beer"
+import React, { useState, useEffect } from "react"
+import { editEntry, getBeers } from "../api/beer"
 
-const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
-  const [count, setCount] = useState(1)
-  const [beer, setBeer] = useState("")
+const EditEntry = ({ isOpen, onClose, onSuccess, entry }) => {
+  const [count, setCount] = useState(entry?.count || 1)
+  const [beer, setBeer] = useState(entry?.beer_name || entry?.beer || "")
   const [beerSuggestions, setBeerSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [comment, setComment] = useState("")
+  const [comment, setComment] = useState(entry?.comment || "")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
@@ -25,26 +25,20 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
 
     if (value.length > 0) {
       try {
-        console.log("Searching for beers with:", value)
         const suggestions = await getBeers(value, 3)
-        console.log("Got beer suggestions:", suggestions)
         setBeerSuggestions(suggestions)
         setShowSuggestions(true)
       } catch (error) {
         console.error("Error fetching beers:", error)
       }
     } else {
-      try {
-        const { topBeers } = await getTopBeers(3, 0)
-        setBeerSuggestions(
-          topBeers.map((b) => ({ id: b.beerName, beerName: b.beerName, quantity: b.quantity }))
-        )
-        setShowSuggestions(true)
-      } catch (error) {
-        console.error("Error fetching top beers:", error)
-        setBeerSuggestions([])
-        setShowSuggestions(true)
-      }
+      // Default suggestions when empty
+      setBeerSuggestions([
+        { id: "default-1", name: "Dreher Gold", beerName: "Dreher Gold" },
+        { id: "default-2", name: "Pilsner Urquell", beerName: "Pilsner Urquell" },
+        { id: "default-3", name: "Krušovice", beerName: "Krušovice" },
+      ])
+      setShowSuggestions(true)
     }
   }
 
@@ -57,21 +51,25 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!beer || count <= 0) return
+
+    // Ellenőrzés: csak létező söröket fogadunk el
+    const beerExists = beerSuggestions.some(
+      (b) => (b.beerName || b.name).toLowerCase() === beer.trim().toLowerCase()
+    )
+    if (beer.trim().length > 0 && beerSuggestions.length > 0 && !beerExists) {
+      setError("Kérlek válassz a javasolt sörök közül, vagy írd be pontosan a sör nevét!")
+      return
+    }
+
     setSaving(true)
     setError("")
     try {
-      await createEntry(count, beer.trim(), comment.trim(), 0.5)
-      // Reset form
-      setCount(1)
-      setBeer("")
-      setBeerSuggestions([])
-      setShowSuggestions(false)
-      setComment("")
+      await editEntry(entry.id, count, beer.trim(), comment.trim(), 0.5)
       onSuccess()
       onClose()
     } catch (error) {
-      console.error("Hiba rögzítés közben:", error)
-      const errorMsg = error.response?.data?.error || "Hiba történt a rögzítés során!"
+      console.error("Hiba módosítás közben:", error)
+      const errorMsg = error.response?.data?.error || "Hiba történt a módosítás során!"
       setError(errorMsg)
     } finally {
       setSaving(false)
@@ -79,14 +77,23 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
   }
 
   const handleClose = () => {
-    setCount(1)
-    setBeer("")
+    setCount(entry?.count || 1)
+    setBeer(entry?.beer_name || entry?.beer || "")
     setBeerSuggestions([])
     setShowSuggestions(false)
-    setComment("")
+    setComment(entry?.comment || "")
     setError("")
     onClose()
   }
+
+  // Initialize form when entry changes
+  useEffect(() => {
+    if (entry) {
+      setCount(entry.count || 1)
+      setBeer(entry.beer_name || entry.beer || "")
+      setComment(entry.comment || "")
+    }
+  }, [entry])
 
   if (!isOpen) return null
 
@@ -101,7 +108,7 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-xl font-semibold">Rögzítek egy sört</h2>
+          <h2 className="text-xl font-semibold">Bejegyzés módosítása</h2>
           <button
             onClick={handleClose}
             className="text-text-secondary hover:text-text-primary text-2xl leading-none"
@@ -133,19 +140,15 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
               <input
                 value={beer}
                 onChange={(e) => handleBeerChange(e.target.value)}
-                onFocus={async () => {
-                  setShowSuggestions(true)
+                onFocus={() => {
                   if (beer.length === 0) {
-                    try {
-                      const { topBeers } = await getTopBeers(3, 0)
-                      setBeerSuggestions(
-                        topBeers.map((b) => ({ id: b.beerName, beerName: b.beerName, quantity: b.quantity }))
-                      )
-                    } catch (error) {
-                      console.error("Error fetching top beers:", error)
-                      setBeerSuggestions([])
-                    }
+                    setBeerSuggestions([
+                      { id: "default-1", name: "Dreher Gold", beerName: "Dreher Gold" },
+                      { id: "default-2", name: "Pilsner Urquell", beerName: "Pilsner Urquell" },
+                      { id: "default-3", name: "Krušovice", beerName: "Krušovice" },
+                    ])
                   }
+                  setShowSuggestions(true)
                 }}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 placeholder="Kezd el írni a sört..."
@@ -157,11 +160,10 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
                   {beerSuggestions.map((b) => (
                     <div
                       key={b.id}
-                      onClick={() => selectBeer(b.beerName)}
+                      onClick={() => selectBeer(b.beerName || b.name)}
                       className="px-3 py-2 hover:bg-bg-secondary cursor-pointer text-text-primary"
                     >
-                      {b.beerName}
-                      {b.quantity ? ` - ${b.quantity.toFixed(1)} L` : ""}
+                      {b.beerName || b.name}
                     </div>
                   ))}
                 </div>
@@ -193,7 +195,7 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
               disabled={saving}
               className="flex-1 px-4 py-2 rounded bg-accent text-bg hover:opacity-95 disabled:opacity-50"
             >
-              {saving ? "Mentés..." : "Rögzítés"}
+              {saving ? "Mentés..." : "Módosítás"}
             </button>
           </div>
         </form>
@@ -202,4 +204,4 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
   )
 }
 
-export default CreateEntry
+export default EditEntry

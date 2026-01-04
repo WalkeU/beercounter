@@ -45,6 +45,51 @@ router.post("/entry", verifyToken, async (req, res) => {
   }
 })
 
+// Update entry
+router.put("/editentry/:entryId", verifyToken, async (req, res) => {
+  const { entryId } = req.params
+  const { count, beer, comment = "" } = req.body
+  const userId = req.user?.id
+  if (!userId || !count || !beer) {
+    return res.status(400).json({ error: "Hiányzó adat!" })
+  }
+  try {
+    // Check if entry exists and belongs to user
+    const [entries] = await pool.query("SELECT user_id FROM entries WHERE id = ?", [entryId])
+    if (entries.length === 0) {
+      return res.status(404).json({ error: "Bejegyzés nem található!" })
+    }
+    if (entries[0].user_id !== userId) {
+      return res.status(403).json({ error: "Csak a saját bejegyzésedet módosíthatod!" })
+    }
+
+    // Normalize beer name
+    const normalizedBeer = capitalizeBeer(beer)
+
+    // Find beer and its quantity
+    let [beerRows] = await pool.query("SELECT id, quantity FROM beers WHERE name = ?", [normalizedBeer])
+    if (beerRows.length === 0) {
+      return res.status(400).json({ error: "Ez a sör nem található az adatbázisban!" })
+    }
+    const beerId = beerRows[0].id
+    const quantity = beerRows[0].quantity ?? 0.5
+
+    await pool.query("UPDATE entries SET beer_id = ?, count = ?, quantity = ?, comment = ? WHERE id = ?", [
+      beerId,
+      count,
+      quantity,
+      comment,
+      entryId,
+    ])
+    const [entry] = await pool.query("SELECT * FROM entries WHERE id = ?", [entryId])
+    res.json(entry[0])
+  } catch (err) {
+    res.status(500).json({
+      error: "Szerver hiba!",
+    })
+  }
+})
+
 // Delete entry
 router.delete("/deleteentry/:entryId", verifyToken, async (req, res) => {
   const { entryId } = req.params
@@ -65,8 +110,33 @@ router.delete("/deleteentry/:entryId", verifyToken, async (req, res) => {
   }
 })
 
+// Modify entry
+router.put("/modifyentry/:entryId", verifyToken, async (req, res) => {
+  const { entryId } = req.params
+  const { count, comment = "" } = req.body
+  const userId = req.user?.id
+  if (!count) {
+    return res.status(400).json({ error: "Hiányzó adat!" })
+  }
+  try {
+    // Check if entry exists and belongs to user
+    const [entries] = await pool.query("SELECT user_id FROM entries WHERE id = ?", [entryId])
+    if (entries.length === 0) {
+      return res.status(404).json({ error: "Bejegyzés nem található!" })
+    }
+    if (entries[0].user_id !== userId) {
+      return res.status(403).json({ error: "Csak a saját bejegyzésedet módosíthatod!" })
+    }
+    await pool.query("UPDATE entries SET count = ?, comment = ? WHERE id = ?", [count, comment, entryId])
+    const [updatedEntry] = await pool.query("SELECT * FROM entries WHERE id = ?", [entryId])
+    res.json(updatedEntry[0])
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
+  }
+})
+
 // Get beers (autocomplete)
-router.get("/beers", async (req, res) => {
+router.get("/beers", verifyToken, async (req, res) => {
   const { search = "", limit = 10 } = req.query
   try {
     let query
@@ -74,11 +144,11 @@ router.get("/beers", async (req, res) => {
     if (search && search.length > 0) {
       // Case-insensitive search using LOWER()
       query =
-        "SELECT id, name AS beerName, abv, price FROM beers WHERE LOWER(name) LIKE LOWER(?) ORDER BY name LIMIT ?"
+        "SELECT id, name AS beerName, abv, price, quantity FROM beers WHERE LOWER(name) LIKE LOWER(?) ORDER BY name LIMIT ?"
       params = [`%${search}%`, Number(limit)]
     } else {
       // Return all beers when no search term
-      query = "SELECT id, name AS beerName, abv, price FROM beers ORDER BY name LIMIT ?"
+      query = "SELECT id, name AS beerName, abv, price, quantity FROM beers ORDER BY name LIMIT ?"
       params = [Number(limit)]
     }
     const [beers] = await pool.query(query, params)
@@ -90,8 +160,28 @@ router.get("/beers", async (req, res) => {
   }
 })
 
+// get top beers
+router.get("/topbeers", verifyToken, async (req, res) => {
+  const { limit = 10, offset = 0 } = req.query
+  try {
+    const [topBeers] = await pool.query(
+      `SELECT b.name AS beerName, b.quantity, b.price, SUM(e.count * e.quantity) AS total
+            FROM entries e
+            JOIN beers b ON e.beer_id = b.id
+            GROUP BY b.id
+            ORDER BY total DESC
+            LIMIT ? OFFSET ?`,
+      [Number(limit), Number(offset)]
+    )
+    const [[{ total }]] = await pool.query("SELECT COUNT(DISTINCT beer_id) AS total FROM entries")
+    res.json({ topBeers, total })
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
+  }
+})
+
 // Get user's entries (paginated)
-router.get("/getuserentries", async (req, res) => {
+router.get("/getuserentries", verifyToken, async (req, res) => {
   const { username, limit = 20, offset = 0 } = req.query
   try {
     const [userRows] = await pool.query("SELECT id FROM users WHERE username = ?", [username])
@@ -117,7 +207,7 @@ router.get("/getuserentries", async (req, res) => {
 })
 
 // Get recent entries (paginated)
-router.get("/recent", async (req, res) => {
+router.get("/recent", verifyToken, async (req, res) => {
   const { limit = 20, offset = 0 } = req.query
   try {
     const [entries] = await pool.query(
@@ -137,10 +227,10 @@ router.get("/recent", async (req, res) => {
 })
 
 // Get global stats
-router.get("/globalstats", async (req, res) => {
+router.get("/globalstats", verifyToken, async (req, res) => {
   try {
     const [[{ totalCount, totalMoney }]] = await pool.query(
-      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * e.quantity * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id"
+      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id"
     )
     const [beerStats] = await pool.query(
       "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN beers b ON e.beer_id = b.id GROUP BY b.id"
@@ -152,14 +242,14 @@ router.get("/globalstats", async (req, res) => {
 })
 
 // Get user stats
-router.get("/userstats", async (req, res) => {
+router.get("/userstats", verifyToken, async (req, res) => {
   const { username } = req.query
   try {
     const [userRows] = await pool.query("SELECT id FROM users WHERE username = ?", [username])
     if (userRows.length === 0) return res.json({})
     const userId = userRows[0].id
     const [[{ totalCount, totalMoney }]] = await pool.query(
-      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * e.quantity * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id WHERE e.user_id = ?",
+      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id WHERE e.user_id = ?",
       [userId]
     )
     const [beerStats] = await pool.query(
@@ -173,7 +263,7 @@ router.get("/userstats", async (req, res) => {
 })
 
 // Get all users (paginated)
-router.get("/alluser", async (req, res) => {
+router.get("/alluser", verifyToken, async (req, res) => {
   const { limit = 20, offset = 0 } = req.query
   try {
     const [users] = await pool.query("SELECT id, username FROM users ORDER BY username LIMIT ? OFFSET ?", [
@@ -188,7 +278,7 @@ router.get("/alluser", async (req, res) => {
 })
 
 // Get top users
-router.get("/top", async (req, res) => {
+router.get("/top", verifyToken, async (req, res) => {
   try {
     const [topUsers] = await pool.query(
       `SELECT u.username, SUM(e.count * e.quantity) AS count

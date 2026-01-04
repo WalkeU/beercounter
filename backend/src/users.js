@@ -65,7 +65,7 @@ router.post("/login", async (req, res) => {
 const verifyToken = (req, res, next) => {
   const token = req.cookies.token
   if (!token) {
-    return res.status(401).json({ error: "Nincs jogosultság!" })
+    return res.status(401).json({ error: "Nincs jogosultságod!" })
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
@@ -98,7 +98,9 @@ router.get("/check-auth", (req, res) => {
 // Get current user info
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    const [users] = await pool.query("SELECT id, email, username FROM users WHERE id = ?", [req.user.id])
+    const [users] = await pool.query("SELECT id, email, username, is_admin FROM users WHERE id = ?", [
+      req.user.id,
+    ])
     if (users.length === 0) {
       return res.status(404).json({ error: "Felhasználó nem található!" })
     }

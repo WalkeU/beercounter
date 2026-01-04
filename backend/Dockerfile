@@ -20,6 +20,7 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/server.js ./
+COPY --from=builder /app/src ./src
 
 # Non-root user használata
 USER node

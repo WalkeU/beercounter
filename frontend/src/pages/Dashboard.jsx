@@ -3,6 +3,8 @@ import { getCurrentUser } from "../api/user"
 import { getRecentEntries, getUserEntries, getGlobalStats, getUserStats, getTopUsers } from "../api/beer"
 import Navbar from "../components/Navbar"
 import CreateEntry from "../components/CreateEntry"
+import EditEntry from "../components/EditEntry"
+import DeleteEntry from "../components/DeleteEntry"
 
 const Dashboard = () => {
   const [user, setUser] = useState(null)
@@ -21,6 +23,8 @@ const Dashboard = () => {
   const [userStats, setUserStats] = useState(null)
   const [topUsers, setTopUsers] = useState([])
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [editEntry, setEditEntry] = useState(null)
+  const [deleteEntry, setDeleteEntry] = useState(null)
 
   // Fetch entries for the current page and view
   useEffect(() => {
@@ -148,6 +152,18 @@ const Dashboard = () => {
         </div>
 
         <CreateEntry isOpen={formOpen} onClose={() => setFormOpen(false)} onSuccess={refreshLists} />
+        <EditEntry
+          isOpen={!!editEntry}
+          onClose={() => setEditEntry(null)}
+          onSuccess={refreshLists}
+          entry={editEntry}
+        />
+        <DeleteEntry
+          isOpen={!!deleteEntry}
+          onClose={() => setDeleteEntry(null)}
+          onSuccess={refreshLists}
+          entry={deleteEntry}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           <div className="col-span-full lg:col-span-1 p-4 rounded border border-border bg-surface h-full">
@@ -171,7 +187,7 @@ const Dashboard = () => {
           <div className="col-span-full lg:col-span-1 p-4 rounded border border-border bg-surface h-full">
             <div>
               <h2>
-                Sörmegoszlás <span className="text-text-secondary">Top {beerDist.length - 1}</span>
+                Sörmegoszlás <span className="text-text-secondary">Top {beerDist.length}</span>
               </h2>
               <div className="space-y-2">
                 {beerDist.slice(0, 5).map((b, i) => (
@@ -247,15 +263,38 @@ const Dashboard = () => {
                               <>
                                 <div className="fixed inset-0 z-20" onClick={() => setOpenMenuId(null)} />
                                 <div className="absolute right-0 mt-1 bg-surface border border-border rounded shadow-lg z-30 min-w-[200px]">
-                                  <button
-                                    onClick={() => {
-                                      // Felhasználó megtekintése - egyelőre nem csinál semmit
-                                      setOpenMenuId(null)
-                                    }}
-                                    className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary"
-                                  >
-                                    Felhasználó megtekintése
-                                  </button>
+                                  {user?.username === (it.user?.username || it.username) ? (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setEditEntry(it)
+                                          setOpenMenuId(null)
+                                        }}
+                                        className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary"
+                                      >
+                                        Módosítás
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setDeleteEntry(it)
+                                          setOpenMenuId(null)
+                                        }}
+                                        className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary text-error"
+                                      >
+                                        Törlés
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        // Felhasználó megtekintése - egyelőre nem csinál semmit
+                                        setOpenMenuId(null)
+                                      }}
+                                      className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary"
+                                    >
+                                      Felhasználó megtekintése
+                                    </button>
+                                  )}
                                 </div>
                               </>
                             )}

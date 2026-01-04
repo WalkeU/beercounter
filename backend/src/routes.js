@@ -9,4 +9,12 @@ router.use("/user", userRoutes)
 const beerRoutes = require("./beers")
 router.use("/beer", beerRoutes)
 
+// Admin routes
+const adminRoutes = require("./admin")
+router.use("/admin", adminRoutes)
+
+// Public routes
+const publicRoutes = require("./public")
+router.use("/public", publicRoutes)
+
 module.exports = router

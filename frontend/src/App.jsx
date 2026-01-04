@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Dashboard from "./pages/Dashboard"
 import AuthPage from "./pages/AuthPage"
+import EditBeers from "./pages/EditBeers"
 import SafeRoute from "./SafeRoute"
 import GuestRoute from "./GuestRoute"
 
@@ -27,6 +28,15 @@ function App() {
             element={
               <SafeRoute>
                 <Dashboard />
+              </SafeRoute>
+            }
+          />
+
+          <Route
+            path="/admin/beers"
+            element={
+              <SafeRoute>
+                <EditBeers />
               </SafeRoute>
             }
           />
