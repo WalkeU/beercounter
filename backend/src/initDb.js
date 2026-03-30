@@ -17,6 +17,9 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `)
+    await connection.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password TINYINT(1) DEFAULT 0
+    `)
 
     // Create beers table
     await connection.query(`
