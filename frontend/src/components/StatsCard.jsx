@@ -17,9 +17,7 @@ const StatsCard = ({ globalTotal, myTotal, totalMoney, myMoney }) => (
       <div className="text-xl font-semibold">
         {myTotal.toFixed(1) * 2} Korsó / {myTotal.toFixed(1)} L
       </div>
-      <div className="text-sm text-text-secondary">
-        Érték: {myMoney ? `${Math.round(myMoney)} Ft` : "-"}
-      </div>
+      <div className="text-sm text-text-secondary">Érték: {myMoney ? `${Math.round(myMoney)} Ft` : "-"}</div>
     </div>
   </div>
 )
