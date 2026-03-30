@@ -129,7 +129,8 @@ router.get("/users", verifyToken, async (req, res) => {
     )
     res.json(users)
   } catch (err) {
-    res.status(500).json({ error: "Szerver hiba!" })
+    console.error("[GET /admin/users] Error:", err.message, err.stack)
+    res.status(500).json({ error: "Szerver hiba!", details: err.message })
   }
 })
 
