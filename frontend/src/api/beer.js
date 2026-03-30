@@ -8,7 +8,7 @@ export const createEntry = async (count, beer, comment = "") => {
       beer,
       comment,
     },
-    { withCredentials: true }
+    { withCredentials: true },
   )
   return response.data
 }
@@ -27,7 +27,7 @@ export const editEntry = async (entryId, count, beer, comment = "", quantity = 0
       comment,
       quantity,
     },
-    { withCredentials: true }
+    { withCredentials: true },
   )
   return response.data
 }
@@ -39,7 +39,7 @@ export const modifyEntry = async (entryId, count, comment = "") => {
       count,
       comment,
     },
-    { withCredentials: true }
+    { withCredentials: true },
   )
   return response.data
 }
@@ -89,11 +89,8 @@ export const getUserStats = async (username) => {
   return response.data
 }
 
-export const getAllUsers = async (limit = 20, offset = 0) => {
-  const response = await axios.get("/api/beer/alluser", {
-    params: { limit, offset },
-    withCredentials: true,
-  })
+export const getAllUsers = async () => {
+  const response = await axios.get("/api/beer/all-users", { withCredentials: true })
   return response.data
 }
 
@@ -107,7 +104,7 @@ export const createBeer = async (name, abv, price, quantity) => {
   const response = await axios.post(
     "/api/admin/createbeer",
     { name, abv, price, quantity },
-    { withCredentials: true }
+    { withCredentials: true },
   )
   return response.data
 }
@@ -116,7 +113,7 @@ export const editBeer = async (beerId, name, abv, price, quantity) => {
   const response = await axios.put(
     `/api/admin/editbeer/${beerId}`,
     { name, abv, price, quantity },
-    { withCredentials: true }
+    { withCredentials: true },
   )
   return response.data
 }

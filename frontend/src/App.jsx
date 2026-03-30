@@ -4,6 +4,9 @@ import HomePage from "./pages/HomePage"
 import Dashboard from "./pages/Dashboard"
 import AuthPage from "./pages/AuthPage"
 import EditBeers from "./pages/EditBeers"
+import BeerDistributionPage from "./pages/BeerDistributionPage"
+import TopUsersPage from "./pages/TopUsersPage"
+import NoticeModal from "./components/NoticeModal"
 import SafeRoute from "./SafeRoute"
 import GuestRoute from "./GuestRoute"
 
@@ -33,6 +36,24 @@ function App() {
           />
 
           <Route
+            path="/beers"
+            element={
+              <SafeRoute>
+                <BeerDistributionPage />
+              </SafeRoute>
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              <SafeRoute>
+                <TopUsersPage />
+              </SafeRoute>
+            }
+          />
+
+          <Route
             path="/admin/beers"
             element={
               <SafeRoute>
@@ -42,6 +63,7 @@ function App() {
           />
         </Routes>
       </Router>
+      <NoticeModal />
     </div>
   )
 }

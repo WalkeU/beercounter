@@ -26,11 +26,21 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Ez az email vagy felhasználónév már foglalt!" })
     }
     const hashed = await bcrypt.hash(password, 10)
-    await pool.query("INSERT INTO users (email, username, password) VALUES (?, ?, ?)", [
-      email,
-      username,
-      hashed,
-    ])
+    const [insertResult] = await pool.query(
+      "INSERT INTO users (email, username, password) VALUES (?, ?, ?)",
+      [email, username, hashed]
+    )
+    const newUserId = insertResult.insertId
+
+    // Auto-acknowledge all current notices (user accepted ÁSZF during registration)
+    const [notices] = await pool.query("SELECT id FROM notices")
+    for (const notice of notices) {
+      await pool.query(
+        "INSERT IGNORE INTO user_notice_acks (user_id, notice_id) VALUES (?, ?)",
+        [newUserId, notice.id]
+      )
+    }
+
     res.status(201).json({ message: "Sikeres regisztráció!" })
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!" })

@@ -2,12 +2,10 @@
 
 - **Indítás:**
   docker-compose -f docker-compose.dev.yml up --build
-
   - Fejlesztői környezet indítása, konténerek építése és futtatása.
 
 - **Leállítás:**
   docker-compose -f docker-compose.dev.yml down
-
   - Konténerek leállítása, adatok megőrzésével.
 
 - **Leállítás volume-okkal:**
@@ -18,14 +16,18 @@
 
 - **Indítás:**
   docker-compose -f docker-compose.prod.yml up --build
-
   - Éles környezet indítása, konténerek építése és futtatása.
 
 - **Leállítás:**
   docker-compose -f docker-compose.prod.yml down
-
   - Konténerek leállítása, adatok megőrzésével.
 
 - **Leállítás volume-okkal:**
   docker-compose -f docker-compose.prod.yml down -v
   - Konténerek és minden adat (volume) törlése.
+
+## Szeezelés (adatok betöltése)
+
+- **Seed betöltése fejlesztői környezetben:**
+  docker exec beercounter-backend-dev npm run seed
+  - Inicializálja az adatbázist és betölti az alapértelmezett adatokat (kezeletek, felhasználók stb.).

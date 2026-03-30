@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { Navigate } from "react-router-dom"
 import { checkAuth } from "./api/user"
+import NoticeModal from "./components/NoticeModal"
 
 const SafeRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null)
@@ -27,7 +28,12 @@ const SafeRoute = ({ children }) => {
     return <Navigate to="/login" replace />
   }
 
-  return children
+  return (
+    <>
+      <NoticeModal />
+      {children}
+    </>
+  )
 }
 
 export default SafeRoute

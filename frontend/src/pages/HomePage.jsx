@@ -28,6 +28,13 @@ const HomePage = () => {
     }).format(amount)
   }
 
+  const formatLiters = (liters) => {
+    return new Intl.NumberFormat("hu-HU", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(liters)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-bg">
       <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -64,7 +71,7 @@ const HomePage = () => {
           <div className="flex flex-col gap-3 mb-4">
             <div className="p-4 bg-white/3 rounded-lg flex items-center justify-between">
               <div className="text-sm text-gray-300">Összes liter</div>
-              <div className="text-lg font-semibold">{Math.round(globalStats.totalCount || 0)} L</div>
+              <div className="text-lg font-semibold">{formatLiters(globalStats.totalCount || 0)} L</div>
             </div>
             <div className="p-4 bg-white/3 rounded-lg flex items-center justify-between">
               <div className="text-sm text-gray-300">Összes költség</div>
