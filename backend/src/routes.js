@@ -17,4 +17,8 @@ router.use("/admin", adminRoutes)
 const publicRoutes = require("./public")
 router.use("/public", publicRoutes)
 
+// Notice routes
+const noticeRoutes = require("./notices")
+router.use("/notice", noticeRoutes)
+
 module.exports = router

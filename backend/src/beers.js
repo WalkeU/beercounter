@@ -34,7 +34,7 @@ router.post("/entry", verifyToken, async (req, res) => {
 
     const [result] = await pool.query(
       "INSERT INTO entries (user_id, beer_id, count, quantity, comment, created_at) VALUES (?, ?, ?, ?, ?, NOW())",
-      [userId, beerId, count, quantity, comment]
+      [userId, beerId, count, quantity, comment],
     )
     const [entry] = await pool.query("SELECT * FROM entries WHERE id = ?", [result.insertId])
     res.json(entry[0])
@@ -171,7 +171,7 @@ router.get("/topbeers", verifyToken, async (req, res) => {
             GROUP BY b.id
             ORDER BY total DESC
             LIMIT ? OFFSET ?`,
-      [Number(limit), Number(offset)]
+      [Number(limit), Number(offset)],
     )
     const [[{ total }]] = await pool.query("SELECT COUNT(DISTINCT beer_id) AS total FROM entries")
     res.json({ topBeers, total })
@@ -195,7 +195,7 @@ router.get("/getuserentries", verifyToken, async (req, res) => {
        WHERE e.user_id = ? 
        ORDER BY e.created_at DESC 
        LIMIT ? OFFSET ?`,
-      [userId, Number(limit), Number(offset)]
+      [userId, Number(limit), Number(offset)],
     )
     const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM entries WHERE user_id = ?", [
       userId,
@@ -217,7 +217,7 @@ router.get("/recent", verifyToken, async (req, res) => {
        JOIN users u ON e.user_id = u.id 
        ORDER BY e.created_at DESC 
        LIMIT ? OFFSET ?`,
-      [Number(limit), Number(offset)]
+      [Number(limit), Number(offset)],
     )
     const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM entries")
     res.json({ entries, total })
@@ -230,10 +230,10 @@ router.get("/recent", verifyToken, async (req, res) => {
 router.get("/globalstats", verifyToken, async (req, res) => {
   try {
     const [[{ totalCount, totalMoney }]] = await pool.query(
-      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id"
+      "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id",
     )
     const [beerStats] = await pool.query(
-      "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN beers b ON e.beer_id = b.id GROUP BY b.id"
+      "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN beers b ON e.beer_id = b.id GROUP BY b.id",
     )
     res.json({ totalCount, totalMoney, beerStats })
   } catch (err) {
@@ -250,11 +250,11 @@ router.get("/userstats", verifyToken, async (req, res) => {
     const userId = userRows[0].id
     const [[{ totalCount, totalMoney }]] = await pool.query(
       "SELECT SUM(e.count * e.quantity) AS totalCount, SUM(e.count * b.price) AS totalMoney FROM entries e JOIN beers b ON e.beer_id = b.id WHERE e.user_id = ?",
-      [userId]
+      [userId],
     )
     const [beerStats] = await pool.query(
       "SELECT b.name, SUM(e.count * e.quantity) AS total FROM entries e JOIN beers b ON e.beer_id = b.id WHERE e.user_id = ? GROUP BY b.id",
-      [userId]
+      [userId],
     )
     res.json({ totalCount, totalMoney, beerStats })
   } catch (err) {
@@ -285,9 +285,24 @@ router.get("/top", verifyToken, async (req, res) => {
 			 FROM entries e JOIN users u ON e.user_id = u.id
 			 GROUP BY u.id
 			 ORDER BY count DESC
-			 LIMIT 5`
+			 LIMIT 5`,
     )
     res.json(topUsers)
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
+  }
+})
+
+// Get all users with their total consumption (in liters)
+router.get("/all-users", verifyToken, async (req, res) => {
+  try {
+    const [allUsers] = await pool.query(
+      `SELECT u.username, SUM(e.count * e.quantity) AS count
+			 FROM entries e JOIN users u ON e.user_id = u.id
+			 GROUP BY u.id
+			 ORDER BY count DESC`,
+    )
+    res.json(allUsers)
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!" })
   }

@@ -1,4 +1,5 @@
 const pool = require("./pool")
+const seedNotices = require("./seedNotices")
 
 async function initDatabase() {
   try {
@@ -49,6 +50,35 @@ async function initDatabase() {
         ADD INDEX IF NOT EXISTS idx_beer_id (beer_id),
         ADD INDEX IF NOT EXISTS idx_created_at (created_at)
     `)
+
+    // Create notices table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS notices (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        notice_key VARCHAR(100) NOT NULL,
+        version INT NOT NULL DEFAULT 1,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        button_text VARCHAR(255) DEFAULT 'Elfogadom',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_notice_version (notice_key, version)
+      )
+    `)
+
+    // Create user notice acknowledgements table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user_notice_acks (
+        user_id INT NOT NULL,
+        notice_id INT NOT NULL,
+        acknowledged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, notice_id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (notice_id) REFERENCES notices(id)
+      )
+    `)
+
+    // Seed notices
+    await seedNotices()
 
     connection.release()
     console.log("Database initialized successfully")
