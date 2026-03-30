@@ -17,7 +17,7 @@ async function seedNotices() {
     await connection.query(`
       INSERT IGNORE INTO notices (notice_key, version, title, content, button_text) VALUES (
         'release-1.1', 1, 'BeerCounter 1.1 - Frissítés',
-        'BeerCounter 1.1\n\nÚj funkciók és fejlesztések:\n\n🆕 Toplista bővítve\n• Új "Összes felhasználó" oldal a teljes rangsorral\n• Részletes statisztikák megjelenítése\n\n🆕 Top sórlista bővítve\n• Sörmegoszlás dedikált oldal\n• Globális és személyes nézet\n• Részletes adatok és grafikonok\n\n� Biztonság és Adatvédelem\n• Frissített Szolgáltatási Feltételek és Adatvédelmi Nyilatkozat\n• Az adatok biztonságosabb rögzítése és a felhasználók jogainak védelme érdekében\n\n�🐛 Bug fixek\n• Több kisebb hiba javítása\n• Teljesítmény optimalizálások\n\nKöszönjük a visszajelzéseket!',
+        'BeerCounter 1.1\n\nÚj funkciók és fejlesztések:\n\n🆕 Toplista bővítve\n• Új "Összes felhasználó" oldal a teljes rangsorral\n• Részletes statisztikák megjelenítése\n\n🆕 Top sórlista bővítve\n• Sörmegoszlás dedikált oldal\n• Globális és személyes nézet\n• Részletes adatok és grafikonok\n\n 🆕 Biztonság és Adatvédelem\n• Frissített Szolgáltatási Feltételek és Adatvédelmi Nyilatkozat\n• Az adatok biztonságosabb rögzítése és a felhasználók jogainak védelme érdekében\n\n🐛 Bug fixek\n• Több kisebb hiba javítása\n• Teljesítmény optimalizálások\n\nKöszönjük a visszajelzéseket!',
         'OK'
       )
     `)
