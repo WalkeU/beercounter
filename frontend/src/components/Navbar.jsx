@@ -59,7 +59,6 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <span className="text-text-primary font-bold">{username}</span>
               {isAdmin && (
                 <button
                   onClick={() => navigate("/admin/beers")}

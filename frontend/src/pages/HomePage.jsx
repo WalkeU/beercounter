@@ -21,7 +21,11 @@ const HomePage = () => {
   }, [])
 
   const formatMoney = (amount) => {
-    return new Intl.NumberFormat("hu-HU", { style: "currency", currency: "HUF" }).format(amount)
+    return new Intl.NumberFormat("hu-HU", {
+      style: "currency",
+      currency: "HUF",
+      maximumFractionDigits: 0,
+    }).format(amount)
   }
 
   return (
@@ -29,12 +33,10 @@ const HomePage = () => {
       <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         <div className="space-y-6">
           <Logo size={64} />
-          <p className="text-sm text-gray-300">
-            Idén ki hány sört iszik? — Írd be, kövesd, és elemezzük együtt.
-          </p>
+          <p className="text-sm text-gray-300">Ki hány sört iszik? — Írd be, kövesd, és elemezzük együtt.</p>
           <p className="text-text-secondary leading-relaxed">
-            Ide beírhatjátok, hogy melyik sört és mennyit ittatok 2026-ban; ezekből statisztikákat készítünk,
-            és összefoglaljuk, mennyi pénzt költöttetek rá összesen. Kezdj el egy bejegyzést, vagy nézd meg a
+            Ide beírhatjátok, hogy melyik sört és mennyit ittatok; ezekből statisztikákat készítünk, és
+            összefoglaljuk, mennyi pénzt költöttetek rá összesen. Kezdj el egy bejegyzést, vagy nézd meg a
             havi statisztikákat.
           </p>
 
@@ -59,14 +61,14 @@ const HomePage = () => {
             <h2 className="text-2xl font-bold">Gyors statisztika</h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="p-4 bg-white/3 rounded-lg text-center">
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="p-4 bg-white/3 rounded-lg flex items-center justify-between">
               <div className="text-sm text-gray-300">Összes liter</div>
-              <div className="text-2xl font-semibold">{globalStats.totalCount?.toFixed(1) || 0} L</div>
+              <div className="text-lg font-semibold">{Math.round(globalStats.totalCount || 0)} L</div>
             </div>
-            <div className="p-4 bg-white/3 rounded-lg text-center">
+            <div className="p-4 bg-white/3 rounded-lg flex items-center justify-between">
               <div className="text-sm text-gray-300">Összes költség</div>
-              <div className="text-2xl font-semibold">{formatMoney(globalStats.totalMoney || 0)}</div>
+              <div className="text-lg font-semibold">{formatMoney(globalStats.totalMoney || 0)}</div>
             </div>
           </div>
 
