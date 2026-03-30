@@ -19,7 +19,9 @@ services:
       retries: 3
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: beercounter-backend:latest
     container_name: beercounter-backend-prod
     environment:
@@ -40,7 +42,9 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     image: beercounter-frontend:latest
     container_name: beercounter-frontend-prod
     ports:
