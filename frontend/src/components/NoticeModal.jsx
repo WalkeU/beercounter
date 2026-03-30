@@ -6,9 +6,15 @@ const NoticeModal = () => {
   const [current, setCurrent] = useState(0)
 
   useEffect(() => {
+    let ignore = false
     getPendingNotices()
-      .then((data) => setNotices(data))
+      .then((data) => {
+        if (!ignore) setNotices(data)
+      })
       .catch(() => {})
+    return () => {
+      ignore = true
+    }
   }, [])
 
   if (notices.length === 0 || current >= notices.length) return null

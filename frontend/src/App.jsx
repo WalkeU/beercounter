@@ -7,7 +7,6 @@ import AdminDashboard from "./pages/AdminDashboard"
 import BeerDistributionPage from "./pages/BeerDistributionPage"
 import TopUsersPage from "./pages/TopUsersPage"
 import ChangePasswordPage from "./pages/ChangePasswordPage"
-import NoticeModal from "./components/NoticeModal"
 import SafeRoute from "./SafeRoute"
 import GuestRoute from "./GuestRoute"
 
@@ -73,7 +72,6 @@ function App() {
           />
         </Routes>
       </Router>
-      <NoticeModal />
     </div>
   )
 }
