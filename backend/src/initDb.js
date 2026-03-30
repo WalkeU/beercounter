@@ -5,15 +5,16 @@ async function initDatabase() {
   try {
     const connection = await pool.getConnection()
 
-    // Create users table if not exists with admin
+    // Create users table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(255) NOT NULL UNIQUE,
         username VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        is_admin TINYINT(1) DEFAULT 0
+        is_admin TINYINT(1) DEFAULT 0,
+        must_change_password TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `)
 
@@ -39,16 +40,11 @@ async function initDatabase() {
         comment TEXT,
         created_at DATETIME,
         FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (beer_id) REFERENCES beers(id)
+        FOREIGN KEY (beer_id) REFERENCES beers(id),
+        INDEX idx_user_id (user_id),
+        INDEX idx_beer_id (beer_id),
+        INDEX idx_created_at (created_at)
       )
-    `)
-
-    // Add indexes for faster queries (after tables are created)
-    await connection.query(`
-      ALTER TABLE entries
-        ADD INDEX IF NOT EXISTS idx_user_id (user_id),
-        ADD INDEX IF NOT EXISTS idx_beer_id (beer_id),
-        ADD INDEX IF NOT EXISTS idx_created_at (created_at)
     `)
 
     // Create notices table

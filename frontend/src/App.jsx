@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Dashboard from "./pages/Dashboard"
 import AuthPage from "./pages/AuthPage"
-import EditBeers from "./pages/EditBeers"
+import AdminDashboard from "./pages/AdminDashboard"
 import BeerDistributionPage from "./pages/BeerDistributionPage"
 import TopUsersPage from "./pages/TopUsersPage"
-import NoticeModal from "./components/NoticeModal"
+import ChangePasswordPage from "./pages/ChangePasswordPage"
 import SafeRoute from "./SafeRoute"
 import GuestRoute from "./GuestRoute"
 
@@ -54,16 +54,24 @@ function App() {
           />
 
           <Route
-            path="/admin/beers"
+            path="/admin"
             element={
               <SafeRoute>
-                <EditBeers />
+                <AdminDashboard />
+              </SafeRoute>
+            }
+          />
+
+          <Route
+            path="/change-password"
+            element={
+              <SafeRoute>
+                <ChangePasswordPage />
               </SafeRoute>
             }
           />
         </Routes>
       </Router>
-      <NoticeModal />
     </div>
   )
 }

@@ -41,10 +41,10 @@ const AuthPage = () => {
         return
       }
       try {
-        await login(username, password)
+        const result = await login(username, password)
         setSuccess("Sikeres bejelentkezés!")
         setError("")
-        window.location.href = "/dashboard"
+        window.location.href = result.must_change_password ? "/change-password" : "/dashboard"
       } catch (err) {
         setError(err?.response?.data?.error || "Hibás felhasználónév vagy jelszó!")
       }

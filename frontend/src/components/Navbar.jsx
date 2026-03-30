@@ -61,7 +61,7 @@ const Navbar = () => {
             <>
               {isAdmin && (
                 <button
-                  onClick={() => navigate("/admin/beers")}
+                  onClick={() => navigate("/admin")}
                   className="bg-bg text-accent border border-accent font-bold px-4 py-2 rounded-md"
                 >
                   Admin

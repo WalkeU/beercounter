@@ -40,3 +40,22 @@ export const logout = async () => {
   const response = await axios.post("/api/user/logout", {}, { withCredentials: true })
   return response.data
 }
+
+export const changePassword = async (newPassword) => {
+  const response = await axios.post(
+    "/api/user/change-password",
+    { newPassword },
+    { withCredentials: true }
+  )
+  return response.data
+}
+
+export const adminGetUsers = async () => {
+  const response = await axios.get("/api/admin/users", { withCredentials: true })
+  return response.data
+}
+
+export const adminResetPassword = async (userId) => {
+  const response = await axios.post(`/api/admin/reset-password/${userId}`, {}, { withCredentials: true })
+  return response.data
+}
