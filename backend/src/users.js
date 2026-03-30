@@ -65,7 +65,7 @@ router.post("/login", async (req, res) => {
     }
     const token = generateToken(user.id, user.username)
     setTokenCookie(res, token)
-    res.json({ message: "Sikeres bejelentkezés!" })
+    res.json({ message: "Sikeres bejelentkezés!", must_change_password: !!user.must_change_password })
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!" })
   }
@@ -115,6 +115,24 @@ router.get("/me", verifyToken, async (req, res) => {
       return res.status(404).json({ error: "Felhasználó nem található!" })
     }
     res.json(users[0])
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
+  }
+})
+
+// Change password (must_change_password flow)
+router.post("/change-password", verifyToken, async (req, res) => {
+  const { newPassword } = req.body
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: "A jelszónak legalább 6 karakter hosszúnak kell lennie!" })
+  }
+  try {
+    const hashed = await bcrypt.hash(newPassword, 10)
+    await pool.query("UPDATE users SET password = ?, must_change_password = 0 WHERE id = ?", [
+      hashed,
+      req.user.id,
+    ])
+    res.json({ message: "Jelszó sikeresen megváltoztatva!" })
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!" })
   }

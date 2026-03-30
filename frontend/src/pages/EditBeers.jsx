@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { getBeers, createBeer, editBeer, deleteBeer } from "../api/beer"
 import Navbar from "../components/Navbar"
 
-const EditBeers = () => {
+const EditBeers = ({ isEmbedded = false }) => {
   const [beers, setBeers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -50,7 +50,7 @@ const EditBeers = () => {
         editingBeer.beerName || editingBeer.name,
         editingBeer.abv,
         editingBeer.price,
-        editingBeer.quantity
+        editingBeer.quantity,
       )
       setEditingBeer(null)
       fetchBeers() // Refresh list
@@ -76,9 +76,9 @@ const EditBeers = () => {
 
   if (loading) {
     return (
-      <div className="app min-h-screen">
-        <Navbar />
-        <div className="container p-6">
+      <div className={isEmbedded ? "" : "app min-h-screen"}>
+        {!isEmbedded && <Navbar />}
+        <div className={isEmbedded ? "" : "container p-6"}>
           <p>Betöltés...</p>
         </div>
       </div>
@@ -86,10 +86,10 @@ const EditBeers = () => {
   }
 
   return (
-    <div className="app min-h-screen">
-      <Navbar />
-      <div className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Sörök kezelése</h1>
+    <div className={isEmbedded ? "" : "app min-h-screen"}>
+      {!isEmbedded && <Navbar />}
+      <div className={isEmbedded ? "" : "container mx-auto p-6"}>
+        {!isEmbedded && <h1 className="text-2xl font-bold mb-6">Sörök kezelése</h1>}
 
         {error && (
           <div className="mb-4 p-3 rounded bg-red-100 border border-red-400 text-red-700">{error}</div>

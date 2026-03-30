@@ -1,6 +1,8 @@
 const express = require("express")
 const router = express.Router()
 const pool = require("./pool")
+const bcrypt = require("bcryptjs")
+const crypto = require("crypto")
 const { verifyToken } = require("./users")
 
 // Helper function to capitalize beer names
@@ -111,6 +113,48 @@ router.delete("/deletebeer/:beerId", verifyToken, async (req, res) => {
     res.json({ message: "Sör sikeresen törölve." })
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!", details: err.message, stack: err.stack, full: err })
+  }
+})
+
+// Get all users (admin only)
+router.get("/users", verifyToken, async (req, res) => {
+  const userId = req.user?.id
+  try {
+    const [userRows] = await pool.query("SELECT is_admin FROM users WHERE id = ?", [userId])
+    if (userRows.length === 0 || !userRows[0].is_admin) {
+      return res.status(403).json({ error: "Nincs jogosultságod ehhez a művelethez!" })
+    }
+    const [users] = await pool.query(
+      "SELECT id, username, email, is_admin, must_change_password FROM users ORDER BY username",
+    )
+    res.json(users)
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
+  }
+})
+
+// Reset user password (admin only)
+router.post("/reset-password/:targetUserId", verifyToken, async (req, res) => {
+  const userId = req.user?.id
+  const { targetUserId } = req.params
+  try {
+    const [userRows] = await pool.query("SELECT is_admin FROM users WHERE id = ?", [userId])
+    if (userRows.length === 0 || !userRows[0].is_admin) {
+      return res.status(403).json({ error: "Nincs jogosultságod ehhez a művelethez!" })
+    }
+    const [targetRows] = await pool.query("SELECT id, username FROM users WHERE id = ?", [targetUserId])
+    if (targetRows.length === 0) {
+      return res.status(404).json({ error: "Felhasználó nem található!" })
+    }
+    const tempPassword = "sokvoltasör123"
+    const hashed = await bcrypt.hash(tempPassword, 10)
+    await pool.query("UPDATE users SET password = ?, must_change_password = 1 WHERE id = ?", [
+      hashed,
+      targetUserId,
+    ])
+    res.json({ tempPassword, username: targetRows[0].username })
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
   }
 })
 
