@@ -95,7 +95,7 @@ const BeerDistributionPage = () => {
                   <div className="flex justify-between items-center mb-2">
                     <div className="text-lg font-medium">{b.beer}</div>
                     <div className="text-text-secondary">
-                      {b.count} Liter ({b.percent}%)
+                      {b.count.toFixed(2)} Liter ({b.percent}%)
                     </div>
                   </div>
                   <div className="w-full h-4 rounded bg-bg-secondary overflow-hidden">
