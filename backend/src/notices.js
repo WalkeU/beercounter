@@ -52,9 +52,7 @@ const requireAdmin = async (req, res) => {
 router.get("/admin/all", verifyToken, async (req, res) => {
   try {
     if (!(await requireAdmin(req, res))) return
-    const [rows] = await pool.query(
-      "SELECT * FROM notices ORDER BY created_at DESC"
-    )
+    const [rows] = await pool.query("SELECT * FROM notices ORDER BY created_at DESC")
     res.json(rows)
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!" })
@@ -73,7 +71,7 @@ router.get("/admin/:id/acks", verifyToken, async (req, res) => {
        JOIN users u ON u.id = a.user_id
        WHERE a.notice_id = ?
        ORDER BY a.acknowledged_at ASC`,
-      [noticeId]
+      [noticeId],
     )
     res.json(rows)
   } catch (err) {
@@ -92,12 +90,12 @@ router.post("/admin", verifyToken, async (req, res) => {
     // Auto-increment version for this key
     const [vRows] = await pool.query(
       "SELECT COALESCE(MAX(version), 0) + 1 AS next_version FROM notices WHERE notice_key = ?",
-      [notice_key]
+      [notice_key],
     )
     const version = vRows[0].next_version
     const [result] = await pool.query(
       "INSERT INTO notices (notice_key, version, title, content, button_text) VALUES (?, ?, ?, ?, ?)",
-      [notice_key, version, title, content, button_text || "Elfogadom"]
+      [notice_key, version, title, content, button_text || "Elfogadom"],
     )
     const [newNotice] = await pool.query("SELECT * FROM notices WHERE id = ?", [result.insertId])
     res.json(newNotice[0])
@@ -114,10 +112,12 @@ router.put("/admin/:id", verifyToken, async (req, res) => {
   if (!title || !content) return res.status(400).json({ error: "Hiányzó adat!" })
   try {
     if (!(await requireAdmin(req, res))) return
-    await pool.query(
-      "UPDATE notices SET title = ?, content = ?, button_text = ? WHERE id = ?",
-      [title, content, button_text || "Elfogadom", noticeId]
-    )
+    await pool.query("UPDATE notices SET title = ?, content = ?, button_text = ? WHERE id = ?", [
+      title,
+      content,
+      button_text || "Elfogadom",
+      noticeId,
+    ])
     const [updated] = await pool.query("SELECT * FROM notices WHERE id = ?", [noticeId])
     res.json(updated[0])
   } catch (err) {
