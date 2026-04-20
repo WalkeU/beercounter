@@ -195,9 +195,7 @@ const AdminNoticesPage = () => {
         <h2 className="text-lg font-bold text-accent mb-4">Értesítések</h2>
         {loading && <p className="text-text-muted text-sm">Betöltés...</p>}
         {error && <p className="text-error text-sm">{error}</p>}
-        {!loading && notices.length === 0 && (
-          <p className="text-text-muted text-sm">Nincs még értesítés.</p>
-        )}
+        {!loading && notices.length === 0 && <p className="text-text-muted text-sm">Nincs még értesítés.</p>}
         <div className="space-y-3">
           {notices.map((n) => (
             <div key={n.id} className="border border-border rounded-lg overflow-hidden">
@@ -242,9 +240,7 @@ const AdminNoticesPage = () => {
               {/* Acks panel */}
               {acksNoticeId === n.id && (
                 <div className="px-4 py-3 border-t border-border">
-                  <p className="text-xs font-semibold text-text-secondary mb-2">
-                    Akik már megerősítették:
-                  </p>
+                  <p className="text-xs font-semibold text-text-secondary mb-2">Akik már megerősítették:</p>
                   {acksLoading ? (
                     <p className="text-xs text-text-muted">Betöltés...</p>
                   ) : acks.length === 0 ? (

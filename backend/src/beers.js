@@ -50,11 +50,37 @@ router.post("/entry", verifyToken, async (req, res) => {
       }
     }
 
+    // If no event_id given, auto-detect active events the user participates in
+    let autoEventIds = []
+    if (!event_id) {
+      const [activeEvents] = await pool.query(
+        `SELECT ep.event_id FROM event_participants ep
+         JOIN events e ON e.id = ep.event_id
+         WHERE ep.user_id = ? AND e.is_active = 1`,
+        [userId]
+      )
+      autoEventIds = activeEvents.map((r) => r.event_id)
+    }
+
+    // Create the primary entry (with explicit event_id, or first auto event, or null)
+    const primaryEventId = event_id || autoEventIds[0] || null
     const [result] = await pool.query(
       "INSERT INTO entries (user_id, beer_id, count, quantity, comment, event_id, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-      [userId, beerId, count, quantity, comment, event_id || null],
+      [userId, beerId, count, quantity, comment, primaryEventId],
     )
     const [entry] = await pool.query("SELECT * FROM entries WHERE id = ?", [result.insertId])
+
+    // If in multiple active events, create additional entries for the remaining events
+    if (autoEventIds.length > 1) {
+      const remaining = autoEventIds.slice(1)
+      for (const evId of remaining) {
+        await pool.query(
+          "INSERT INTO entries (user_id, beer_id, count, quantity, comment, event_id, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+          [userId, beerId, count, quantity, comment, evId]
+        )
+      }
+    }
+
     res.json(entry[0])
   } catch (err) {
     res.status(500).json({
