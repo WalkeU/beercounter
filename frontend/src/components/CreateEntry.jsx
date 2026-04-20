@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { createEntry, getBeers, getTopBeers } from "../api/beer"
 
-const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
+const CreateEntry = ({ isOpen, onClose, onSuccess, eventId = null }) => {
   const [count, setCount] = useState(1)
   const [beer, setBeer] = useState("")
   const [beerSuggestions, setBeerSuggestions] = useState([])
@@ -60,7 +60,7 @@ const CreateEntry = ({ isOpen, onClose, onSuccess }) => {
     setSaving(true)
     setError("")
     try {
-      await createEntry(count, beer.trim(), comment.trim(), 0.5)
+      await createEntry(count, beer.trim(), comment.trim(), eventId)
       // Reset form
       setCount(1)
       setBeer("")

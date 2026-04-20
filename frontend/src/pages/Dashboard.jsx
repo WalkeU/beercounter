@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { getCurrentUser } from "../api/user"
 import { getRecentEntries, getUserEntries, getGlobalStats, getUserStats, getTopUsers } from "../api/beer"
+import { getEvents } from "../api/events"
 import Navbar from "../components/Navbar"
 import CreateEntry from "../components/CreateEntry"
 import EditEntry from "../components/EditEntry"
@@ -11,6 +13,7 @@ import TopList from "../components/TopList"
 import RecentEntries from "../components/RecentEntries"
 
 const Dashboard = () => {
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -28,6 +31,7 @@ const Dashboard = () => {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [editEntry, setEditEntry] = useState(null)
   const [deleteEntry, setDeleteEntry] = useState(null)
+  const [joinedEvents, setJoinedEvents] = useState([])
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -58,6 +62,8 @@ const Dashboard = () => {
         ])
         setStats(s)
         setTopUsers(topUsersData)
+        const allEvents = await getEvents().catch(() => [])
+        setJoinedEvents(allEvents.filter((ev) => ev.is_joined > 0 && ev.is_active))
       } catch (error) {
         console.error("Hiba a betöltés során:", error)
       } finally {
@@ -106,6 +112,22 @@ const Dashboard = () => {
     <div className="app min-h-screen">
       <Navbar />
       <div className="container mx-auto p-6">
+        {/* Joined active events banners */}
+        {joinedEvents.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {joinedEvents.map((ev) => (
+              <button
+                key={ev.id}
+                onClick={() => navigate(`/events/${ev.id}`)}
+                className="w-full flex items-center justify-between px-5 py-3 rounded border border-accent bg-surface hover:bg-accent hover:text-bg transition-colors group"
+              >
+                <span className="font-semibold">{ev.name}</span>
+                <span className="text-sm opacity-70 group-hover:opacity-100">Megnyitás →</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <button
@@ -166,6 +188,16 @@ const Dashboard = () => {
             onEdit={setEditEntry}
             onDelete={setDeleteEntry}
           />
+        </div>
+
+        {/* Events button */}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => navigate("/events")}
+            className="px-6 py-3 rounded border border-border bg-surface hover:border-accent hover:text-accent transition-colors font-semibold"
+          >
+            Események
+          </button>
         </div>
       </div>
     </div>

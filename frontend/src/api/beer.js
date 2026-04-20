@@ -1,12 +1,13 @@
 import axios from "axios"
 
-export const createEntry = async (count, beer, comment = "") => {
+export const createEntry = async (count, beer, comment = "", eventId = null) => {
   const response = await axios.post(
     "/api/beer/entry",
     {
       count,
       beer,
       comment,
+      event_id: eventId || undefined,
     },
     { withCredentials: true },
   )

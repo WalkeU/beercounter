@@ -15,7 +15,7 @@ const capitalizeBeer = (str) => {
 
 // Create entry
 router.post("/entry", verifyToken, async (req, res) => {
-  const { count, beer, comment = "" } = req.body
+  const { count, beer, comment = "", event_id = null } = req.body
   const userId = req.user?.id
   if (!userId || !count || !beer) {
     return res.status(400).json({ error: "Hiányzó adat!" })
@@ -32,9 +32,27 @@ router.post("/entry", verifyToken, async (req, res) => {
     const beerId = beerRows[0].id
     const quantity = beerRows[0].quantity ?? 0.5
 
+    // If event_id provided, verify event is active and user is a participant
+    if (event_id) {
+      const [eventRows] = await pool.query("SELECT is_active FROM events WHERE id = ?", [event_id])
+      if (eventRows.length === 0) {
+        return res.status(404).json({ error: "Esemény nem található!" })
+      }
+      if (!eventRows[0].is_active) {
+        return res.status(400).json({ error: "Ez az esemény már nem aktív!" })
+      }
+      const [participation] = await pool.query(
+        "SELECT 1 FROM event_participants WHERE event_id = ? AND user_id = ?",
+        [event_id, userId]
+      )
+      if (participation.length === 0) {
+        return res.status(403).json({ error: "Nem vagy résztvevője ennek az eseménynek!" })
+      }
+    }
+
     const [result] = await pool.query(
-      "INSERT INTO entries (user_id, beer_id, count, quantity, comment, created_at) VALUES (?, ?, ?, ?, ?, NOW())",
-      [userId, beerId, count, quantity, comment],
+      "INSERT INTO entries (user_id, beer_id, count, quantity, comment, event_id, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+      [userId, beerId, count, quantity, comment, event_id || null],
     )
     const [entry] = await pool.query("SELECT * FROM entries WHERE id = ?", [result.insertId])
     res.json(entry[0])
