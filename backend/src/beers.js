@@ -43,7 +43,7 @@ router.post("/entry", verifyToken, async (req, res) => {
       }
       const [participation] = await pool.query(
         "SELECT 1 FROM event_participants WHERE event_id = ? AND user_id = ?",
-        [event_id, userId]
+        [event_id, userId],
       )
       if (participation.length === 0) {
         return res.status(403).json({ error: "Nem vagy résztvevője ennek az eseménynek!" })
@@ -57,7 +57,7 @@ router.post("/entry", verifyToken, async (req, res) => {
         `SELECT ep.event_id FROM event_participants ep
          JOIN events e ON e.id = ep.event_id
          WHERE ep.user_id = ? AND e.is_active = 1`,
-        [userId]
+        [userId],
       )
       autoEventIds = activeEvents.map((r) => r.event_id)
     }
@@ -76,7 +76,7 @@ router.post("/entry", verifyToken, async (req, res) => {
       for (const evId of remaining) {
         await pool.query(
           "INSERT INTO entries (user_id, beer_id, count, quantity, comment, event_id, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-          [userId, beerId, count, quantity, comment, evId]
+          [userId, beerId, count, quantity, comment, evId],
         )
       }
     }
