@@ -1,18 +1,20 @@
 import React from "react"
 import { useNavigate } from "react-router-dom"
 
-const TopList = ({ topUsers }) => {
+const TopList = ({ topUsers, eventId }) => {
   const navigate = useNavigate()
   return (
     <div className="col-span-full lg:col-span-1 p-4 rounded border border-border bg-surface h-full">
       <div className="flex items-center justify-between mb-2">
         <h2>Toplista</h2>
-        <button
-          onClick={() => navigate("/users")}
-          className="text-sm px-3 py-1 rounded border border-accent text-accent hover:bg-accent hover:text-bg transition-colors"
-        >
-          Bővebben
-        </button>
+        {!eventId && (
+          <button
+            onClick={() => navigate("/users")}
+            className="text-sm px-3 py-1 rounded border border-accent text-accent hover:bg-accent hover:text-bg transition-colors"
+          >
+            Bővebben
+          </button>
+        )}
       </div>
       <div className="space-y-2">
         {topUsers.map((u, i) => (

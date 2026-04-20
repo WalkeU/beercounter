@@ -76,6 +76,38 @@ async function initDatabase() {
       )
     `)
 
+    // Create events table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS events (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        start_date DATETIME,
+        end_date DATETIME,
+        is_active TINYINT(1) DEFAULT 1,
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id)
+      )
+    `)
+
+    // Create event participants table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS event_participants (
+        event_id INT NOT NULL,
+        user_id INT NOT NULL,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (event_id, user_id),
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `)
+
+    // Add event_id column to entries
+    await connection.query(`
+      ALTER TABLE entries ADD COLUMN IF NOT EXISTS event_id INT DEFAULT NULL
+    `)
+
     // Seed notices
     await seedNotices()
 

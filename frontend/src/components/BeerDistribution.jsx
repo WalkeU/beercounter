@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 
 const palette = ["bg-rank-1", "bg-rank-2", "bg-rank-3", "bg-rank-4", "bg-rank-5"]
 
-const BeerDistribution = ({ beerDist }) => {
+const BeerDistribution = ({ beerDist, eventId }) => {
   const navigate = useNavigate()
   const maxCount = Math.max(...beerDist.map((b) => b.count), 1)
 
@@ -13,12 +13,14 @@ const BeerDistribution = ({ beerDist }) => {
         <h2>
           <span className="text-text-secondary">Top 5</span> Sör
         </h2>
-        <button
-          onClick={() => navigate("/beers")}
-          className="text-sm px-3 py-1 rounded border border-accent text-accent hover:bg-accent hover:text-bg transition-colors"
-        >
-          Bővebben
-        </button>
+        {!eventId && (
+          <button
+            onClick={() => navigate("/beers")}
+            className="text-sm px-3 py-1 rounded border border-accent text-accent hover:bg-accent hover:text-bg transition-colors"
+          >
+            Bővebben
+          </button>
+        )}
       </div>
       <div className="space-y-2">
         {beerDist.slice(0, 5).map((b, i) => (
