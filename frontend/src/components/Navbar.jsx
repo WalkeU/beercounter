@@ -59,6 +59,12 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
+              <button
+                onClick={() => navigate("/stats")}
+                className="bg-bg text-accent border border-accent font-bold px-4 py-2 rounded-md"
+              >
+                Statisztikák
+              </button>
               {isAdmin && (
                 <button
                   onClick={() => navigate("/admin")}
