@@ -8,6 +8,19 @@ async function isAdmin(userId) {
   return rows.length > 0 && rows[0].is_admin
 }
 
+// Convert ISO datetime string to MySQL DATETIME format (YYYY-MM-DD HH:MM:SS)
+function formatDateTime(isoString) {
+  if (!isoString) return null
+  const date = new Date(isoString)
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(date.getUTCDate()).padStart(2, "0")
+  const hours = String(date.getUTCHours()).padStart(2, "0")
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0")
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0")
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 // GET / - List all events (active first)
 router.get("/", verifyToken, async (req, res) => {
   const userId = req.user?.id
@@ -18,7 +31,7 @@ router.get("/", verifyToken, async (req, res) => {
         (SELECT COUNT(*) FROM event_participants ep WHERE ep.event_id = e.id AND ep.user_id = ?) AS is_joined
        FROM events e
        ORDER BY e.is_active DESC, e.created_at DESC`,
-      [userId]
+      [userId],
     )
     res.json(events)
   } catch (err) {
@@ -32,15 +45,16 @@ router.post("/", verifyToken, async (req, res) => {
   const { name, description, start_date, end_date, is_active = 1 } = req.body
   if (!name) return res.status(400).json({ error: "Hiányzó adat!" })
   try {
-    if (!await isAdmin(userId)) return res.status(403).json({ error: "Nincs jogosultságod!" })
+    if (!(await isAdmin(userId))) return res.status(403).json({ error: "Nincs jogosultságod!" })
     const [result] = await pool.query(
       "INSERT INTO events (name, description, start_date, end_date, is_active, created_by) VALUES (?, ?, ?, ?, ?, ?)",
-      [name, description || null, start_date || null, end_date || null, is_active, userId]
+      [name, description || null, formatDateTime(start_date), formatDateTime(end_date), is_active, userId],
     )
     const [event] = await pool.query("SELECT * FROM events WHERE id = ?", [result.insertId])
     res.json(event[0])
   } catch (err) {
-    res.status(500).json({ error: "Szerver hiba!" })
+    console.error("POST /events error:", err)
+    res.status(500).json({ error: "Szerver hiba!", details: err.message })
   }
 })
 
@@ -50,17 +64,18 @@ router.put("/:id", verifyToken, async (req, res) => {
   const { id } = req.params
   const { name, description, start_date, end_date, is_active } = req.body
   try {
-    if (!await isAdmin(userId)) return res.status(403).json({ error: "Nincs jogosultságod!" })
+    if (!(await isAdmin(userId))) return res.status(403).json({ error: "Nincs jogosultságod!" })
     const [rows] = await pool.query("SELECT id FROM events WHERE id = ?", [id])
     if (rows.length === 0) return res.status(404).json({ error: "Esemény nem található!" })
     await pool.query(
       "UPDATE events SET name = ?, description = ?, start_date = ?, end_date = ?, is_active = ? WHERE id = ?",
-      [name, description || null, start_date || null, end_date || null, is_active, id]
+      [name, description || null, formatDateTime(start_date), formatDateTime(end_date), is_active, id],
     )
     const [event] = await pool.query("SELECT * FROM events WHERE id = ?", [id])
     res.json(event[0])
   } catch (err) {
-    res.status(500).json({ error: "Szerver hiba!" })
+    console.error("PUT /events/:id error:", err)
+    res.status(500).json({ error: "Szerver hiba!", details: err.message })
   }
 })
 
@@ -69,7 +84,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
   const userId = req.user?.id
   const { id } = req.params
   try {
-    if (!await isAdmin(userId)) return res.status(403).json({ error: "Nincs jogosultságod!" })
+    if (!(await isAdmin(userId))) return res.status(403).json({ error: "Nincs jogosultságod!" })
     const [rows] = await pool.query("SELECT id FROM events WHERE id = ?", [id])
     if (rows.length === 0) return res.status(404).json({ error: "Esemény nem található!" })
     await pool.query("UPDATE entries SET event_id = NULL WHERE event_id = ?", [id])
@@ -90,7 +105,7 @@ router.post("/:id/join", verifyToken, async (req, res) => {
     if (!rows[0].is_active) return res.status(400).json({ error: "Ez az esemény már nem aktív!" })
     const [existing] = await pool.query(
       "SELECT 1 FROM event_participants WHERE event_id = ? AND user_id = ?",
-      [id, userId]
+      [id, userId],
     )
     if (existing.length > 0) return res.status(400).json({ error: "Már csatlakoztál ehhez az eseményhez!" })
     await pool.query("INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)", [id, userId])
@@ -122,7 +137,7 @@ router.get("/:id", verifyToken, async (req, res) => {
         (SELECT COUNT(*) FROM event_participants ep WHERE ep.event_id = e.id) AS participant_count,
         (SELECT COUNT(*) FROM event_participants ep WHERE ep.event_id = e.id AND ep.user_id = ?) AS is_joined
        FROM events e WHERE e.id = ?`,
-      [userId, id]
+      [userId, id],
     )
     if (rows.length === 0) return res.status(404).json({ error: "Esemény nem található!" })
     res.json(rows[0])
@@ -152,12 +167,9 @@ router.get("/:id/entries", verifyToken, async (req, res) => {
        WHERE ${where}
        ORDER BY e.created_at DESC
        LIMIT ? OFFSET ?`,
-      [...params, Number(limit), Number(offset)]
+      [...params, Number(limit), Number(offset)],
     )
-    const [[{ total }]] = await pool.query(
-      `SELECT COUNT(*) AS total FROM entries e WHERE ${where}`,
-      params
-    )
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM entries e WHERE ${where}`, params)
     res.json({ entries, total })
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!" })
@@ -177,7 +189,7 @@ router.get("/:id/leaderboard", verifyToken, async (req, res) => {
        WHERE e.event_id = ?
        GROUP BY u.id
        ORDER BY total_liters DESC`,
-      [id]
+      [id],
     )
     const [entryLeaderboard] = await pool.query(
       `SELECT e.id, u.username, b.name AS beer_name, e.count, e.quantity, e.comment, e.created_at,
@@ -187,7 +199,7 @@ router.get("/:id/leaderboard", verifyToken, async (req, res) => {
        JOIN beers b ON e.beer_id = b.id
        WHERE e.event_id = ?
        ORDER BY total_liters DESC`,
-      [id]
+      [id],
     )
     res.json({ userLeaderboard, entryLeaderboard })
   } catch (err) {
@@ -204,7 +216,7 @@ router.get("/:id/stats", verifyToken, async (req, res) => {
        FROM entries e
        JOIN beers b ON e.beer_id = b.id
        WHERE e.event_id = ?`,
-      [id]
+      [id],
     )
     const [beerStats] = await pool.query(
       `SELECT b.name, SUM(e.count * e.quantity) AS total
@@ -213,7 +225,7 @@ router.get("/:id/stats", verifyToken, async (req, res) => {
        WHERE e.event_id = ?
        GROUP BY b.id
        ORDER BY total DESC`,
-      [id]
+      [id],
     )
     res.json({ totalCount, totalMoney, beerStats })
   } catch (err) {
