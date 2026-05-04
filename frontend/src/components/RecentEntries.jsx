@@ -46,7 +46,7 @@ const RecentEntries = ({
                     <div className="relative">
                       <button
                         onClick={() => setOpenMenuId(openMenuId === it.id ? null : it.id)}
-                        className="opacity-0 text-lg group-hover:opacity-100 px-0 py-1 text-text-secondary hover:text-text-primary transition-opacity"
+                        className="text-lg px-0 py-1 text-text-secondary hover:text-text-primary transition-colors"
                       >
                         ⋮
                       </button>
@@ -77,7 +77,10 @@ const RecentEntries = ({
                               </>
                             ) : (
                               <button
-                                onClick={() => setOpenMenuId(null)}
+                                onClick={() => {
+                                  alert("Felhasználó megtekintése lassan elérhető")
+                                  setOpenMenuId(null)
+                                }}
                                 className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary"
                               >
                                 Felhasználó megtekintése

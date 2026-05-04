@@ -9,11 +9,113 @@ const CURRENT_YEAR = new Date().getFullYear()
 const CURRENT_MONTH = new Date().getMonth() + 1
 const YEARS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i)
 
-const formatLabel = (row, groupBy) => {
+const formatLabel = (row, groupBy, allMonths = false) => {
   if (groupBy === "year") return String(row.year)
   if (groupBy === "month") return MONTHS[(row.month || 1) - 1]
-  if (groupBy === "day") return String(row.day)
-  return `${row.week}. hét`
+  if (groupBy === "day") {
+    if (allMonths) return `${MONTHS[(row.month || 1) - 1]} ${String(row.day).padStart(2, "0")}`
+    return String(row.day).padStart(2, "0")
+  }
+  return `${String(row.week).padStart(2, "0")}. hét`
+}
+
+// Helper function to generate all periods up to today for the selected year
+const generateAllPeriods = (groupBy, year, month) => {
+  const today = new Date()
+  const periods = []
+
+  if (groupBy === "week") {
+    // Generate all weeks of the selected year up to today using ISO 8601 week numbering
+    const yearNum = Number(year)
+
+    // Calculate the week number for a date
+    const getWeekNumber = (date) => {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+      const dayNum = d.getUTCDay() || 7
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+      return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+    }
+
+    const maxWeek = getWeekNumber(today)
+    for (let w = 1; w <= maxWeek; w++) {
+      periods.push({ year: yearNum, week: w })
+    }
+  } else if (groupBy === "month") {
+    // Generate all months of the selected year up to today
+    const yearNum = Number(year)
+    for (let m = 1; m <= 12; m++) {
+      const monthDate = new Date(yearNum, m - 1, 1)
+      if (monthDate.getFullYear() < yearNum || (monthDate.getFullYear() === yearNum && monthDate <= today)) {
+        periods.push({ year: yearNum, month: m })
+      }
+    }
+  } else if (groupBy === "day") {
+    // Generate all days for the selected month(s) up to today
+    const yearNum = Number(year)
+
+    if (month) {
+      // Single month
+      const monthNum = Number(month)
+      const daysInMonth = new Date(yearNum, monthNum, 0).getDate()
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dayDate = new Date(yearNum, monthNum - 1, d)
+        if (dayDate <= today) {
+          periods.push({ year: yearNum, month: monthNum, day: d })
+        }
+      }
+    } else {
+      // All months of the year
+      for (let m = 1; m <= 12; m++) {
+        const daysInMonth = new Date(yearNum, m, 0).getDate()
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dayDate = new Date(yearNum, m - 1, d)
+          if (dayDate <= today) {
+            periods.push({ year: yearNum, month: m, day: d })
+          }
+        }
+      }
+    }
+  }
+
+  return periods
+}
+
+// Helper function to merge fetched data with all periods, filling missing with 0
+const fillMissingPeriods = (fetchedRows, groupBy, year, month = null) => {
+  const allPeriods = generateAllPeriods(groupBy, year, month)
+  const dataMap = new Map()
+
+  // Create a map of existing data for quick lookup
+  fetchedRows.forEach((row) => {
+    let key
+    if (groupBy === "week") {
+      key = `${row.year}-${row.week}`
+    } else if (groupBy === "month") {
+      key = `${row.year}-${row.month}`
+    } else if (groupBy === "day") {
+      key = `${row.year}-${row.month}-${row.day}`
+    }
+    dataMap.set(key, row.total || 0)
+  })
+
+  // Create complete list with missing periods filled with 0
+  const result = allPeriods.map((period) => {
+    let key
+    if (groupBy === "week") {
+      key = `${period.year}-${period.week}`
+    } else if (groupBy === "month") {
+      key = `${period.year}-${period.month}`
+    } else if (groupBy === "day") {
+      key = `${period.year}-${period.month}-${period.day}`
+    }
+    return {
+      ...period,
+      total: dataMap.get(key) ?? 0,
+    }
+  })
+
+  return result
 }
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -31,7 +133,8 @@ const StatsPage = () => {
   const [selectedUser, setSelectedUser] = useState("all")
   const [groupBy, setGroupBy] = useState("month")
   const [selectedYear, setSelectedYear] = useState(String(CURRENT_YEAR))
-  const [selectedMonth, setSelectedMonth] = useState(String(CURRENT_MONTH))
+  const [selectedMonth, setSelectedMonth] = useState("all")
+  const allDays = groupBy === "day" && selectedMonth === "all"
   const [chartData, setChartData] = useState([])
   const [totalLiters, setTotalLiters] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -61,7 +164,8 @@ const StatsPage = () => {
       setChartLoading(true)
       try {
         const yearParam = groupBy === "year" ? null : selectedYear
-        const monthParam = groupBy === "day" ? selectedMonth : null
+        const monthParam = groupBy === "day" && selectedMonth !== "all" ? selectedMonth : null
+        const allMonths = groupBy === "day" && selectedMonth === "all"
         const [rows, statsData] = await Promise.all([
           getTimeline(groupBy, yearParam, monthParam, selectedUser),
           selectedUser === "all"
@@ -69,8 +173,20 @@ const StatsPage = () => {
             : getUserStats(selectedUser).catch(() => null),
         ])
 
-        const mapped = rows.map((row) => ({
-          label: formatLabel(row, groupBy),
+        // Fill missing periods with 0 for week, month, and day views
+        let filledRows = rows
+        if (groupBy === "week" && yearParam) {
+          filledRows = fillMissingPeriods(rows, groupBy, selectedYear, null)
+        } else if (groupBy === "month" && yearParam) {
+          filledRows = fillMissingPeriods(rows, groupBy, selectedYear, null)
+        } else if (groupBy === "day" && monthParam) {
+          filledRows = fillMissingPeriods(rows, groupBy, selectedYear, selectedMonth)
+        } else if (groupBy === "day" && allMonths) {
+          filledRows = fillMissingPeriods(rows, groupBy, selectedYear, null)
+        }
+
+        const mapped = filledRows.map((row) => ({
+          label: formatLabel(row, groupBy, allMonths),
           total: Number(row.total || 0),
         }))
         setChartData(mapped)
@@ -87,6 +203,7 @@ const StatsPage = () => {
   const periodLabel = () => {
     if (groupBy === "year") return "Összes év"
     if (groupBy === "month") return `${selectedYear} – hónapok`
+    if (groupBy === "day" && selectedMonth === "all") return `${selectedYear} – összes nap`
     if (groupBy === "day") return `${selectedYear}. ${MONTHS[Number(selectedMonth) - 1]} – napok`
     return `${selectedYear} – hetek`
   }
@@ -189,6 +306,7 @@ const StatsPage = () => {
                   onChange={(e) => setSelectedMonth(e.target.value)}
                   className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
                 >
+                  <option value="all">Összes</option>
                   {MONTHS.map((m, i) => (
                     <option key={i + 1} value={String(i + 1)}>
                       {m}
@@ -233,13 +351,18 @@ const StatsPage = () => {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
+                barCategoryGap={allDays ? 1 : "10%"}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: "#cccccc", fontSize: 12 }}
+                  tick={{ fill: "#cccccc", fontSize: allDays ? 9 : 12 }}
                   axisLine={{ stroke: "#444" }}
                   tickLine={false}
+                  interval={allDays ? Math.floor(chartData.length / 12) : 0}
                 />
                 <YAxis
                   tick={{ fill: "#cccccc", fontSize: 12 }}
