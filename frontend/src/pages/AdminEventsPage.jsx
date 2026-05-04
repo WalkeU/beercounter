@@ -74,7 +74,12 @@ const AdminEventsPage = ({ isEmbedded = false }) => {
   }
 
   const handleDelete = async (ev) => {
-    if (!window.confirm(`Biztosan törlöd a(z) "${ev.name}" eseményt? A bejegyzések megtartódnak, de leválnak az eseményről.`)) return
+    if (
+      !window.confirm(
+        `Biztosan törlöd a(z) "${ev.name}" eseményt? A bejegyzések megtartódnak, de leválnak az eseményről.`,
+      )
+    )
+      return
     try {
       setError("")
       await deleteEvent(ev.id)
@@ -85,6 +90,12 @@ const AdminEventsPage = ({ isEmbedded = false }) => {
   }
 
   const handleToggleActive = async (ev) => {
+    const newStatus = ev.is_active ? 0 : 1
+    const action = ev.is_active ? "Lezárni" : "Aktiválni"
+    const confirmMsg = `Biztosan szeretnéd a(z) "${ev.name}" eseményt ${action.toLowerCase()}?`
+    
+    if (!window.confirm(confirmMsg)) return
+
     try {
       setError("")
       await updateEvent(ev.id, {
@@ -92,7 +103,7 @@ const AdminEventsPage = ({ isEmbedded = false }) => {
         description: ev.description,
         start_date: ev.start_date,
         end_date: ev.end_date,
-        is_active: ev.is_active ? 0 : 1,
+        is_active: newStatus,
       })
       await fetchEvents()
     } catch (err) {
@@ -117,18 +128,13 @@ const AdminEventsPage = ({ isEmbedded = false }) => {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Események kezelése</h2>
-        <button
-          onClick={openCreate}
-          className="px-4 py-2 rounded bg-accent text-bg hover:opacity-90 text-sm"
-        >
+        <button onClick={openCreate} className="px-4 py-2 rounded bg-accent text-bg hover:opacity-90 text-sm">
           + Új esemény
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded border border-error text-error text-sm bg-surface">
-          {error}
-        </div>
+        <div className="mb-4 p-3 rounded border border-error text-error text-sm bg-surface">{error}</div>
       )}
 
       {events.length === 0 && (
@@ -149,12 +155,12 @@ const AdminEventsPage = ({ isEmbedded = false }) => {
                 {ev.is_active ? (
                   <span className="shrink-0 text-xs bg-accent text-bg px-2 py-0.5 rounded">Aktív</span>
                 ) : (
-                  <span className="shrink-0 text-xs border border-border text-text-secondary px-2 py-0.5 rounded">Lezárt</span>
+                  <span className="shrink-0 text-xs border border-border text-text-secondary px-2 py-0.5 rounded">
+                    Lezárt
+                  </span>
                 )}
               </div>
-              {ev.description && (
-                <p className="text-sm text-text-secondary truncate">{ev.description}</p>
-              )}
+              {ev.description && <p className="text-sm text-text-secondary truncate">{ev.description}</p>}
               <div className="flex items-center gap-3 text-xs text-text-secondary mt-1">
                 <span>{ev.participant_count ?? 0} résztvevő</span>
                 <span>Kezdés: {formatDate(ev.start_date)}</span>
@@ -208,9 +214,7 @@ const AdminEventsPage = ({ isEmbedded = false }) => {
               </button>
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-4">
-              {error && (
-                <div className="p-3 rounded border border-error text-error text-sm">{error}</div>
-              )}
+              {error && <div className="p-3 rounded border border-error text-error text-sm">{error}</div>}
               <div>
                 <label className="block text-sm text-text-secondary mb-1">Név *</label>
                 <input
@@ -257,7 +261,9 @@ const AdminEventsPage = ({ isEmbedded = false }) => {
                   onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked ? 1 : 0 }))}
                   className="accent-accent"
                 />
-                <label htmlFor="is_active" className="text-sm">Aktív esemény</label>
+                <label htmlFor="is_active" className="text-sm">
+                  Aktív esemény
+                </label>
               </div>
               <div className="flex gap-3 pt-2">
                 <button
