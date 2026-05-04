@@ -112,7 +112,6 @@ const EventsPage = () => {
                   event={ev}
                   onCardClick={() => navigate(`/events/${ev.id}`)}
                   onJoin={(e) => handleJoin(e, ev.id)}
-                  onLeave={(e) => handleLeave(e, ev.id)}
                   actionLoading={actionLoading === ev.id}
                   formatDate={formatDate}
                 />
@@ -131,7 +130,6 @@ const EventsPage = () => {
                   event={ev}
                   onCardClick={() => navigate(`/events/${ev.id}`)}
                   onJoin={null}
-                  onLeave={null}
                   actionLoading={false}
                   formatDate={formatDate}
                 />
@@ -144,7 +142,7 @@ const EventsPage = () => {
   )
 }
 
-const EventCard = ({ event, onCardClick, onJoin, onLeave, actionLoading, formatDate }) => {
+const EventCard = ({ event, onCardClick, onJoin, actionLoading, formatDate }) => {
   return (
     <div
       onClick={onCardClick}
@@ -174,25 +172,15 @@ const EventCard = ({ event, onCardClick, onJoin, onLeave, actionLoading, formatD
             {event.end_date && <span>Vége: {formatDate(event.end_date)}</span>}
           </div>
         </div>
-        {event.is_active && (
+        {onJoin && (
           <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-            {event.is_joined > 0 ? (
-              <button
-                onClick={onLeave}
-                disabled={actionLoading}
-                className="px-3 py-1.5 rounded border border-border bg-bg-secondary text-sm hover:opacity-90 disabled:opacity-50"
-              >
-                {actionLoading ? "..." : "Kilépés"}
-              </button>
-            ) : (
-              <button
-                onClick={onJoin}
-                disabled={actionLoading}
-                className="px-3 py-1.5 rounded bg-accent text-bg text-sm hover:opacity-90 disabled:opacity-50"
-              >
-                {actionLoading ? "..." : "Csatlakozás"}
-              </button>
-            )}
+            <button
+              onClick={onJoin}
+              disabled={actionLoading}
+              className="px-3 py-1.5 rounded bg-accent text-bg text-sm hover:opacity-90 disabled:opacity-50"
+            >
+              {actionLoading ? "..." : "Csatlakozás"}
+            </button>
           </div>
         )}
       </div>

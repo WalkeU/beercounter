@@ -43,7 +43,7 @@ router.post("/entry", verifyToken, async (req, res) => {
       }
       const [participation] = await pool.query(
         "SELECT 1 FROM event_participants WHERE event_id = ? AND user_id = ?",
-        [event_id, userId]
+        [event_id, userId],
       )
       if (participation.length === 0) {
         return res.status(403).json({ error: "Nem vagy résztvevője ennek az eseménynek!" })
@@ -57,7 +57,7 @@ router.post("/entry", verifyToken, async (req, res) => {
         `SELECT ep.event_id FROM event_participants ep
          JOIN events e ON e.id = ep.event_id
          WHERE ep.user_id = ? AND e.is_active = 1`,
-        [userId]
+        [userId],
       )
       autoEventIds = activeEvents.map((r) => r.event_id)
     }
@@ -76,7 +76,7 @@ router.post("/entry", verifyToken, async (req, res) => {
       for (const evId of remaining) {
         await pool.query(
           "INSERT INTO entries (user_id, beer_id, count, quantity, comment, event_id, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-          [userId, beerId, count, quantity, comment, evId]
+          [userId, beerId, count, quantity, comment, evId],
         )
       }
     }
@@ -347,6 +347,75 @@ router.get("/all-users", verifyToken, async (req, res) => {
 			 ORDER BY count DESC`,
     )
     res.json(allUsers)
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
+  }
+})
+
+// Get all usernames list (for stats selector)
+router.get("/userlist", verifyToken, async (req, res) => {
+  try {
+    const [users] = await pool.query("SELECT username FROM users ORDER BY username")
+    res.json(users.map((u) => u.username))
+  } catch (err) {
+    res.status(500).json({ error: "Szerver hiba!" })
+  }
+})
+
+// Get consumption timeline grouped by year/month/week/day
+// Query params: groupBy (year|month|week|day), year, month (for day view), username (optional, 'all' = everyone)
+router.get("/timeline", verifyToken, async (req, res) => {
+  const { groupBy = "month", year, month, username } = req.query
+
+  try {
+    let userFilter = ""
+    let params = []
+
+    if (username && username !== "all") {
+      const [userRows] = await pool.query("SELECT id FROM users WHERE username = ?", [username])
+      if (userRows.length === 0) return res.json([])
+      userFilter = "AND e.user_id = ?"
+      params.push(userRows[0].id)
+    }
+
+    let yearFilter = ""
+    if (year) {
+      yearFilter = "AND YEAR(e.created_at) = ?"
+      params.push(Number(year))
+    }
+
+    let monthFilter = ""
+    if (month) {
+      monthFilter = "AND MONTH(e.created_at) = ?"
+      params.push(Number(month))
+    }
+
+    let selectExpr, groupExpr
+    if (groupBy === "year") {
+      selectExpr = "YEAR(e.created_at) AS year"
+      groupExpr = "YEAR(e.created_at)"
+    } else if (groupBy === "week") {
+      selectExpr = "YEAR(e.created_at) AS year, WEEK(e.created_at, 1) AS week"
+      groupExpr = "YEAR(e.created_at), WEEK(e.created_at, 1)"
+    } else if (groupBy === "day") {
+      selectExpr = "YEAR(e.created_at) AS year, MONTH(e.created_at) AS month, DAY(e.created_at) AS day"
+      groupExpr = "YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at)"
+    } else {
+      // month
+      selectExpr = "YEAR(e.created_at) AS year, MONTH(e.created_at) AS month"
+      groupExpr = "YEAR(e.created_at), MONTH(e.created_at)"
+    }
+
+    const [rows] = await pool.query(
+      `SELECT ${selectExpr}, SUM(e.count * e.quantity) AS total
+       FROM entries e
+       WHERE 1=1 ${userFilter} ${yearFilter} ${monthFilter}
+       GROUP BY ${groupExpr}
+       ORDER BY ${groupExpr}`,
+      params,
+    )
+
+    res.json(rows)
   } catch (err) {
     res.status(500).json({ error: "Szerver hiba!" })
   }

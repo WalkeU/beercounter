@@ -100,6 +100,19 @@ export const getTopUsers = async () => {
   return response.data
 }
 
+export const getUserList = async () => {
+  const response = await axios.get("/api/beer/userlist", { withCredentials: true })
+  return response.data
+}
+
+export const getTimeline = async (groupBy = "month", year = null, month = null, username = "all") => {
+  const response = await axios.get("/api/beer/timeline", {
+    params: { groupBy, year: year || undefined, month: month || undefined, username },
+    withCredentials: true,
+  })
+  return response.data
+}
+
 // Admin beer management
 export const createBeer = async (name, abv, price, quantity) => {
   const response = await axios.post(
