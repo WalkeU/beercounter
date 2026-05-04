@@ -139,6 +139,7 @@ const EventDetailPage = () => {
     )
   }
 
+  const isActive = event.is_active > 0
   const isJoined = event.is_joined > 0
   const myRow = leaderboard.userLeaderboard.find((u) => u.username === user?.username)
   const myTotal = myRow ? parseFloat(myRow.total_liters) : 0
@@ -163,7 +164,7 @@ const EventDetailPage = () => {
     <div className="app min-h-screen">
       <Navbar />
 
-      {event.is_active && countdownLabel && (
+      {isActive && countdownLabel && (
         <div className="bg-accent text-bg text-center py-2 px-4 font-semibold text-sm">{countdownLabel}</div>
       )}
 
@@ -172,7 +173,7 @@ const EventDetailPage = () => {
         <div className="flex flex-col mb-4">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <h1 className="text-2xl md:text-3xl font-bold">{event.name}</h1>
-            {event.is_active ? (
+            {isActive ? (
               <span className="text-xs bg-accent text-bg px-2 py-0.5 rounded">Aktív</span>
             ) : (
               <span className="text-xs border border-border text-text-secondary px-2 py-0.5 rounded">
@@ -186,7 +187,7 @@ const EventDetailPage = () => {
             )}
           </div>
         </div>
-        {event.is_active && (
+        {isActive && (
           <div className="flex gap-2 flex-wrap mb-4">
             {isJoined && (
               <button
