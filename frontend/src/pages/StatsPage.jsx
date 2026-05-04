@@ -9,10 +9,13 @@ const CURRENT_YEAR = new Date().getFullYear()
 const CURRENT_MONTH = new Date().getMonth() + 1
 const YEARS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i)
 
-const formatLabel = (row, groupBy) => {
+const formatLabel = (row, groupBy, allMonths = false) => {
   if (groupBy === "year") return String(row.year)
   if (groupBy === "month") return MONTHS[(row.month || 1) - 1]
-  if (groupBy === "day") return String(row.day)
+  if (groupBy === "day") {
+    if (allMonths) return `${MONTHS[(row.month || 1) - 1]} ${row.day}`
+    return String(row.day)
+  }
   return `${row.week}. hét`
 }
 
@@ -31,7 +34,8 @@ const StatsPage = () => {
   const [selectedUser, setSelectedUser] = useState("all")
   const [groupBy, setGroupBy] = useState("month")
   const [selectedYear, setSelectedYear] = useState(String(CURRENT_YEAR))
-  const [selectedMonth, setSelectedMonth] = useState(String(CURRENT_MONTH))
+  const [selectedMonth, setSelectedMonth] = useState("all")
+  const allDays = groupBy === "day" && selectedMonth === "all"
   const [chartData, setChartData] = useState([])
   const [totalLiters, setTotalLiters] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -61,7 +65,8 @@ const StatsPage = () => {
       setChartLoading(true)
       try {
         const yearParam = groupBy === "year" ? null : selectedYear
-        const monthParam = groupBy === "day" ? selectedMonth : null
+        const monthParam = groupBy === "day" && selectedMonth !== "all" ? selectedMonth : null
+        const allMonths = groupBy === "day" && selectedMonth === "all"
         const [rows, statsData] = await Promise.all([
           getTimeline(groupBy, yearParam, monthParam, selectedUser),
           selectedUser === "all"
@@ -70,7 +75,7 @@ const StatsPage = () => {
         ])
 
         const mapped = rows.map((row) => ({
-          label: formatLabel(row, groupBy),
+          label: formatLabel(row, groupBy, allMonths),
           total: Number(row.total || 0),
         }))
         setChartData(mapped)
@@ -87,6 +92,7 @@ const StatsPage = () => {
   const periodLabel = () => {
     if (groupBy === "year") return "Összes év"
     if (groupBy === "month") return `${selectedYear} – hónapok`
+    if (groupBy === "day" && selectedMonth === "all") return `${selectedYear} – összes nap`
     if (groupBy === "day") return `${selectedYear}. ${MONTHS[Number(selectedMonth) - 1]} – napok`
     return `${selectedYear} – hetek`
   }
@@ -189,6 +195,7 @@ const StatsPage = () => {
                   onChange={(e) => setSelectedMonth(e.target.value)}
                   className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
                 >
+                  <option value="all">Összes</option>
                   {MONTHS.map((m, i) => (
                     <option key={i + 1} value={String(i + 1)}>
                       {m}
@@ -233,13 +240,18 @@ const StatsPage = () => {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
+                barCategoryGap={allDays ? 1 : "10%"}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: "#cccccc", fontSize: 12 }}
+                  tick={{ fill: "#cccccc", fontSize: allDays ? 9 : 12 }}
                   axisLine={{ stroke: "#444" }}
                   tickLine={false}
+                  interval={allDays ? Math.floor(chartData.length / 12) : 0}
                 />
                 <YAxis
                   tick={{ fill: "#cccccc", fontSize: 12 }}
