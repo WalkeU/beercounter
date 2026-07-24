@@ -21,4 +21,8 @@ router.use("/public", publicRoutes)
 const noticeRoutes = require("./notices")
 router.use("/notice", noticeRoutes)
 
+// Event routes
+const eventRoutes = require("./events")
+router.use("/events", eventRoutes)
+
 module.exports = router

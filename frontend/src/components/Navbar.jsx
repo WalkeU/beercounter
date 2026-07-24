@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { checkAuth, logout, getCurrentUser } from "../api/user"
 import Logo from "./Logo"
@@ -8,7 +8,20 @@ const Navbar = () => {
   const [username, setUsername] = useState("")
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
   const navigate = useNavigate()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   useEffect(() => {
     const verifyAuth = async () => {
@@ -58,22 +71,59 @@ const Navbar = () => {
 
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
-            <>
-              {isAdmin && (
-                <button
-                  onClick={() => navigate("/admin")}
-                  className="bg-bg text-accent border border-accent font-bold px-4 py-2 rounded-md"
-                >
-                  Admin
-                </button>
-              )}
+            <div className="relative" ref={menuRef}>
               <button
-                onClick={handleLogout}
-                className="bg-bg text-accent border border-accent font-bold px-4 py-2 rounded-md"
+                onClick={() => setMenuOpen((o) => !o)}
+                className="bg-bg text-accent border border-accent font-bold px-4 py-2 rounded-md flex items-center gap-2"
               >
-                Kilépés
+                {username || "Menü"}
+                <span className={`text-xs transition-transform ${menuOpen ? "rotate-180" : ""}`}>▼</span>
               </button>
-            </>
+
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-surface border border-border rounded-md shadow-lg z-50 overflow-hidden">
+                  <button
+                    onClick={() => {
+                      navigate("/dashboard")
+                      setMenuOpen(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-bg transition-colors"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate("/stats")
+                      setMenuOpen(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-bg transition-colors"
+                  >
+                    Statisztikák
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        navigate("/admin")
+                        setMenuOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-bg transition-colors"
+                    >
+                      Admin
+                    </button>
+                  )}
+                  <div className="border-t border-border" />
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      setMenuOpen(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error hover:text-bg transition-colors"
+                  >
+                    Kilépés
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <button
               onClick={() => navigate("/login")}

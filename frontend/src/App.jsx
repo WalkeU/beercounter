@@ -7,6 +7,9 @@ import AdminDashboard from "./pages/AdminDashboard"
 import BeerDistributionPage from "./pages/BeerDistributionPage"
 import TopUsersPage from "./pages/TopUsersPage"
 import ChangePasswordPage from "./pages/ChangePasswordPage"
+import EventsPage from "./pages/EventsPage"
+import EventDetailPage from "./pages/EventDetailPage"
+import StatsPage from "./pages/StatsPage"
 import SafeRoute from "./SafeRoute"
 import GuestRoute from "./GuestRoute"
 
@@ -67,6 +70,33 @@ function App() {
             element={
               <SafeRoute>
                 <ChangePasswordPage />
+              </SafeRoute>
+            }
+          />
+
+          <Route
+            path="/events"
+            element={
+              <SafeRoute>
+                <EventsPage />
+              </SafeRoute>
+            }
+          />
+
+          <Route
+            path="/events/:id"
+            element={
+              <SafeRoute>
+                <EventDetailPage />
+              </SafeRoute>
+            }
+          />
+
+          <Route
+            path="/stats"
+            element={
+              <SafeRoute>
+                <StatsPage />
               </SafeRoute>
             }
           />

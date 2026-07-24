@@ -65,7 +65,7 @@ const HomePage = () => {
 
         <div className="bg-white/5 border border-white/6 rounded-2xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Gyors statisztika</h2>
+            <h2 className="text-2xl font-bold">Gyors statisztikák</h2>
           </div>
 
           <div className="flex flex-col gap-3 mb-4">

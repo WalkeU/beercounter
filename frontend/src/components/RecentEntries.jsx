@@ -1,6 +1,17 @@
 import React from "react"
 
-const RecentEntries = ({ entries, view, user, page, pageCount, onPageChange, openMenuId, setOpenMenuId, onEdit, onDelete }) => {
+const RecentEntries = ({
+  entries,
+  view,
+  user,
+  page,
+  pageCount,
+  onPageChange,
+  openMenuId,
+  setOpenMenuId,
+  onEdit,
+  onDelete,
+}) => {
   const canPrev = page > 1
   const canNext = page < pageCount
 
@@ -35,7 +46,7 @@ const RecentEntries = ({ entries, view, user, page, pageCount, onPageChange, ope
                     <div className="relative">
                       <button
                         onClick={() => setOpenMenuId(openMenuId === it.id ? null : it.id)}
-                        className="opacity-0 text-lg group-hover:opacity-100 px-0 py-1 text-text-secondary hover:text-text-primary transition-opacity"
+                        className="text-lg px-0 py-1 text-text-secondary hover:text-text-primary transition-colors"
                       >
                         ⋮
                       </button>
@@ -46,13 +57,19 @@ const RecentEntries = ({ entries, view, user, page, pageCount, onPageChange, ope
                             {user?.username === (it.user?.username || it.username) ? (
                               <>
                                 <button
-                                  onClick={() => { onEdit(it); setOpenMenuId(null) }}
+                                  onClick={() => {
+                                    onEdit(it)
+                                    setOpenMenuId(null)
+                                  }}
                                   className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary"
                                 >
                                   Módosítás
                                 </button>
                                 <button
-                                  onClick={() => { onDelete(it); setOpenMenuId(null) }}
+                                  onClick={() => {
+                                    onDelete(it)
+                                    setOpenMenuId(null)
+                                  }}
                                   className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary text-error"
                                 >
                                   Törlés
@@ -60,7 +77,10 @@ const RecentEntries = ({ entries, view, user, page, pageCount, onPageChange, ope
                               </>
                             ) : (
                               <button
-                                onClick={() => setOpenMenuId(null)}
+                                onClick={() => {
+                                  alert("Felhasználó megtekintése lassan elérhető")
+                                  setOpenMenuId(null)
+                                }}
                                 className="w-full px-4 py-2 text-left hover:bg-bg-secondary text-text-primary"
                               >
                                 Felhasználó megtekintése
@@ -78,11 +98,41 @@ const RecentEntries = ({ entries, view, user, page, pageCount, onPageChange, ope
         </table>
         {pageCount > 1 && (
           <div className="flex items-center bg-surface/80 p-2 absolute left-0 right-0 bottom-0 w-full rounded-none z-20 justify-between lg:right-4 lg:bottom-4 lg:w-auto lg:rounded lg:justify-end">
-            <button className="px-2 py-1 rounded disabled:opacity-50" onClick={() => onPageChange(1)} disabled={!canPrev} title="Első oldal">⏮️</button>
-            <button className="px-2 py-1 rounded disabled:opacity-50" onClick={() => onPageChange(page - 1)} disabled={!canPrev} title="Előző oldal">◀️</button>
-            <span className="px-2 text-sm">{page} / {pageCount}</span>
-            <button className="px-2 py-1 rounded disabled:opacity-50" onClick={() => onPageChange(page + 1)} disabled={!canNext} title="Következő oldal">▶️</button>
-            <button className="px-2 py-1 rounded disabled:opacity-50" onClick={() => onPageChange(pageCount)} disabled={!canNext} title="Utolsó oldal">⏭️</button>
+            <button
+              className="px-2 py-1 rounded disabled:opacity-50"
+              onClick={() => onPageChange(1)}
+              disabled={!canPrev}
+              title="Első oldal"
+            >
+              ⏮️
+            </button>
+            <button
+              className="px-2 py-1 rounded disabled:opacity-50"
+              onClick={() => onPageChange(page - 1)}
+              disabled={!canPrev}
+              title="Előző oldal"
+            >
+              ◀️
+            </button>
+            <span className="px-2 text-sm">
+              {page} / {pageCount}
+            </span>
+            <button
+              className="px-2 py-1 rounded disabled:opacity-50"
+              onClick={() => onPageChange(page + 1)}
+              disabled={!canNext}
+              title="Következő oldal"
+            >
+              ▶️
+            </button>
+            <button
+              className="px-2 py-1 rounded disabled:opacity-50"
+              onClick={() => onPageChange(pageCount)}
+              disabled={!canNext}
+              title="Utolsó oldal"
+            >
+              ⏭️
+            </button>
           </div>
         )}
       </div>

@@ -1,12 +1,13 @@
 import axios from "axios"
 
-export const createEntry = async (count, beer, comment = "") => {
+export const createEntry = async (count, beer, comment = "", eventId = null) => {
   const response = await axios.post(
     "/api/beer/entry",
     {
       count,
       beer,
       comment,
+      event_id: eventId || undefined,
     },
     { withCredentials: true },
   )
@@ -96,6 +97,19 @@ export const getAllUsers = async () => {
 
 export const getTopUsers = async () => {
   const response = await axios.get("/api/beer/top", { withCredentials: true })
+  return response.data
+}
+
+export const getUserList = async () => {
+  const response = await axios.get("/api/beer/userlist", { withCredentials: true })
+  return response.data
+}
+
+export const getTimeline = async (groupBy = "month", year = null, month = null, username = "all") => {
+  const response = await axios.get("/api/beer/timeline", {
+    params: { groupBy, year: year || undefined, month: month || undefined, username },
+    withCredentials: true,
+  })
   return response.data
 }
 
